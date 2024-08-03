@@ -1,6 +1,6 @@
 ### Summary of COMM 605 Assignment 1 - Literature Review Exercise
 
-https://chatgpt.com/c/eb18b8c7-3f5f-4599-9108-a9756f852d32
+
 
 #### Overview
 - **Course**: COMM 605 Semester 2, 2024
