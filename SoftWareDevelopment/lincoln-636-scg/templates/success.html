@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h2 class="card-title mb-0">Success</h2>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-success" role="alert">
+                {{ message }} {% if customer_id %} Customer ID: {{ customer_id }} {% endif %}
+            </div>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a href="{{ url_for('addcustomer') }}" class="btn btn-primary">Add Another Customer</a>
+                {% if customer_id %}
+                <a href="{{ url_for('customer_report', customer_id=customer_id) }}" class="btn btn-secondary">View Customer Report</a>
+                {% endif %}
+                <a href="{{ url_for('home') }}" class="btn btn-secondary">Go to Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

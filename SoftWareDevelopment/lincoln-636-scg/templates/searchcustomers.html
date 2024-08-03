@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h2 class="card-title mb-0">Search Customers</h2>
+        </div>
+        <div class="card-body">
+            <h3 class="card-subtitle mb-3 text-muted">Enter customer name or email to search.</h3>
+            <form action="{{ url_for('searchcustomers') }}" method="POST" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="searchquery" class="form-label">Search Query</label>
+                    <input type="text" class="form-control" id="searchquery" name="searchquery" required>
+                    <div class="invalid-feedback">
+                        Please enter a search query.
+                    </div>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-dark btn-lg">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+      'use strict'
+
+      const forms = document.querySelectorAll('.needs-validation')
+
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+
+          form.classList.add('was-validated')
+        }, false)
+      })
+    })()
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h2 class="card-title mb-0">{% if customer %}Edit{% else %}Add{% endif %} Customer</h2>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for(action, customer_id=customer.customer_id if customer else None) }}" method="POST" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="firstname" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="firstname" name="firstname" value="{{ customer.firstname if customer else '' }}" required>
+                    <div class="invalid-feedback">
+                        Please enter the first name.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="familyname" class="form-label">Family Name</label>
+                    <input type="text" class="form-control" id="familyname" name="familyname" value="{{ customer.familyname if customer else '' }}" required>
+                    <div class="invalid-feedback">
+                        Please enter the family name.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ customer.email if customer else '' }}" required>
+                    <div class="invalid-feedback">
+                        Please enter a valid email address.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="phone" name="phone" value="{{ customer.phone if customer else '' }}" required>
+                    <div class="invalid-feedback">
+                        Please enter a valid phone number.
+                    </div>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-dark btn-lg">{% if customer %}Update{% else %}Add{% endif %} Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+      'use strict'
+
+      const forms = document.querySelectorAll('.needs-validation')
+
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+
+          form.classList.add('was-validated')
+        }, false)
+      })
+    })()
+</script>
+{% endblock %}

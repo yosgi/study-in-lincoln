@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Welcome to Selwyn Campground{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h2 class="card-title mb-0">Welcome to Selwyn Campground</h2>
+        </div>
+        <div class="card-body">
+            <p class="card-text">Explore the features below to manage your campground bookings and view campers information.</p>
+            <div class="list-group">
+                <a href="{{ url_for('booking') }}" class="list-group-item list-group-item-action">Make a Booking</a>
+                <a href="{{ url_for('campers') }}" class="list-group-item list-group-item-action">View Campers</a>
+                <a href="{{ url_for('searchcustomers') }}" class="list-group-item list-group-item-action">Search Customers</a>
+                <a href="{{ url_for('addcustomer') }}" class="list-group-item list-group-item-action">Add Customer</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

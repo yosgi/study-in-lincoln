@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h2 class="card-title mb-0">Selwyn Campground - Who is Camping?</h2>
+        </div>
+        <div class="card-body">
+            <h3 class="card-subtitle mb-3 text-muted">Choose the date you'd like to view who is camping.</h3>
+            <form action="{{ url_for('campers') }}" method="POST" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="campdate" class="form-label">Select Date</label>
+                    <input type="date" class="form-control" id="campdate" name="campdate" value="{{ currentdate }}" required>
+                    <div class="invalid-feedback">
+                        Please select a date.
+                    </div>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-dark btn-lg">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+      'use strict'
+
+      const forms = document.querySelectorAll('.needs-validation')
+
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+
+          form.classList.add('was-validated')
+        }, false)
+      })
+    })()
+</script>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h2 class="card-title mb-0">Selwyn Campground - Camper List</h2>
+        </div>
+        <div class="card-body">
+            {% if camperlist %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>First Name</th>
+                                <th>Family Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Site ID</th>
+                                <th>Booking Date</th>
+                                <th>Occupancy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for camper in camperlist %}
+                            <tr>
+                                <td>{{ camper[1] }}</td>
+                                <td>{{ camper[2] }}</td>
+                                <td>{{ camper[3] }}</td>
+                                <td>{{ camper[4] }}</td>
+                                <td>{{ camper[5] }}</td>
+                                <td>{{ camper[6] }}</td>
+                                <td>{{ camper[7] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    No campers found for the selected date.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

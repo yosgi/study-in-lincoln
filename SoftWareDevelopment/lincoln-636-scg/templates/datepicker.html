@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h2 class="card-title mb-0">Selwyn Campground - Make a Booking</h2>
+        </div>
+        <div class="card-body">
+            <h3 class="card-subtitle mb-3 text-muted">Choose the date you'd like the booking to start on.</h3>
+            <form action="{{ url_for('booking') }}" method="POST" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="bookingdate" class="form-label">Choose Start Night of Booking</label>
+                    <input type="date" class="form-control" id="bookingdate" name="bookingdate" min="{{ currentdate }}" required>
+                    <div class="invalid-feedback">
+                        Please choose a start date.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="bookingnights" class="form-label">Number of Nights</label>
+                    <input type="number" class="form-control" id="bookingnights" name="bookingnights" min="1" max="5" step="1" value="1" required>
+                    <div class="invalid-feedback">
+                        Please enter a valid number of nights between 1 and 5.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="occupancy" class="form-label">Number of People</label>
+                    <input type="number" class="form-control" id="occupancy" name="occupancy" min="1" max="8" step="1" value="1" required>
+                    <div class="invalid-feedback">
+                        Please enter a valid number of people between 1 and 8.
+                    </div>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-dark btn-lg">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+      'use strict'
+
+      const forms = document.querySelectorAll('.needs-validation')
+
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+
+          form.classList.add('was-validated')
+        }, false)
+      })
+    })()
+</script>
+{% endblock %}

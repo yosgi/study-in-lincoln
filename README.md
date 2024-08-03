@@ -9,6 +9,6 @@ This is the archive of the fintech course at Lincoln University.
 - [x] [Principles of Accounting Finance](PrinciplesofAccountingFinance/)
 
 # uncompleted
-- [ ] [Big Data , Machine Learning](Big Data , Machine Learning/)
+- [ ] [Big Data , Machine Learning](BigData,MachineLearning/)
 - [ ] [Search for Mannagers](SearchforMannagers/)
 - [ ] [Finance,Futures,Options](Finance,Futures,Options/)
