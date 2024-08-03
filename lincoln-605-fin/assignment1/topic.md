@@ -1,31 +1,25 @@
 ### Summary:
 
-1. **Company**: Tesla, Inc.
-2. **Sector**: Automotive
-3. **Problem**: Factors Affecting the Purchasing Decision of Electric Vehicles (EVs)
-4. **Research Question**: What are the key factors influencing consumer purchasing decisions for electric vehicles in the United States?
+#### Step 1:  Company
+ Tesla, Inc.
+#### Step2 : Sector
+
+Automotive
+#### Step3 : Problem
+Factors Affecting the Purchasing Decision of Electric Vehicles (EVs)
+
+
+
+#### Step4 : Research Question
+
+ What are the key factors influencing consumer purchasing decisions for electric vehicles in the United States?
 
 (Investigate what influences consumers to buy or not buy EVs, such as cost, range anxiety, charging infrastructure, and environmental awareness.)
 
 
-5. ** selected articles**:
-    - key words 
-    
-    - **Article 1**: 
-        - **Electric vehicle purchasing decision**: 
-        - **Factors influencing EV adoption**: 
-        - **Consumer behavior electric vehicles**: 
-        - **Tesla EV market analysis**: 
-        - **Barriers to EV adoption**: 
-        - **EV consumer preferences**: 
+### Step 5: Select  Articles
 
-
-Let's go through the process of searching for relevant articles step-by-step.
-
-### Step 1: Define Keywords
-
-Start by identifying a list of keywords and phrases related to your topic. Here are some suggestions:
-
+#### key words
 - "Electric vehicle purchasing decision"
 - "Factors influencing EV adoption"
 - "Consumer behavior electric vehicles"
@@ -33,12 +27,9 @@ Start by identifying a list of keywords and phrases related to your topic. Here 
 - "Barriers to EV adoption"
 - "EV consumer preferences"
 
-
+#### search methods
 Access academic databases such as Google Scholar, JSTOR, PubMed, or your university's library resources. Google Scholar is a good starting point because it is freely accessible.
 
-
-
-### Step 5: Select Articles
 
 #### Suggested Articles:
 
