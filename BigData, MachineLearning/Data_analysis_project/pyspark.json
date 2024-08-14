@@ -1,0 +1,2460 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1jq29gsIgtCE"
+      },
+      "source": [
+        "# Data analysis with PySPARK in Colab"
+      ],
+      "id": "1jq29gsIgtCE"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-cJ4XS4xv7w-"
+      },
+      "source": [
+        "## 1. Install packages"
+      ],
+      "id": "-cJ4XS4xv7w-"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "d9KvGCebhV5y"
+      },
+      "source": [
+        "[Pyspark version link](https://spark.apache.org/downloads.html)"
+      ],
+      "id": "d9KvGCebhV5y"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "1lsUxGCkq_Ee",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "c2aae52f-37aa-4481-9933-314d2a612e43"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting pyspark\n",
+            "  Downloading pyspark-3.5.2.tar.gz (317.3 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m317.3/317.3 MB\u001b[0m \u001b[31m3.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: py4j==0.10.9.7 in /usr/local/lib/python3.10/dist-packages (from pyspark) (0.10.9.7)\n",
+            "Building wheels for collected packages: pyspark\n",
+            "  Building wheel for pyspark (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for pyspark: filename=pyspark-3.5.2-py2.py3-none-any.whl size=317812365 sha256=737dbce308957601514aa7e107e588d66c7d91820ca7d4b3e649c3ccb7ee477a\n",
+            "  Stored in directory: /root/.cache/pip/wheels/34/34/bd/03944534c44b677cd5859f248090daa9fb27b3c8f8e5f49574\n",
+            "Successfully built pyspark\n",
+            "Installing collected packages: pyspark\n",
+            "Successfully installed pyspark-3.5.2\n"
+          ]
+        }
+      ],
+      "source": [
+        "!pip install pyspark"
+      ],
+      "id": "1lsUxGCkq_Ee"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {
+        "id": "tcNpO0jdyvHo",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "70617bc4-1612-498e-b9fc-f35bf2f2ca43"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: pyarrow in /usr/local/lib/python3.10/dist-packages (14.0.2)\n",
+            "Requirement already satisfied: numpy>=1.16.6 in /usr/local/lib/python3.10/dist-packages (from pyarrow) (1.26.4)\n"
+          ]
+        }
+      ],
+      "source": [
+        "!pip install pyarrow\n",
+        "!pip install -q findspark"
+      ],
+      "id": "tcNpO0jdyvHo"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "EdDPelqWg1J7"
+      },
+      "source": [
+        "##2. Initialize  PySPARK"
+      ],
+      "id": "EdDPelqWg1J7"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 3,
+      "metadata": {
+        "id": "VecXeDgQRfgw"
+      },
+      "outputs": [],
+      "source": [
+        "from pyspark.sql import SparkSession\n",
+        "\n",
+        "spark = SparkSession.builder \\\n",
+        "        .master(\"local\") \\\n",
+        "        .appName(\"Swiggy Data on Google Colab\") \\\n",
+        "        .getOrCreate()"
+      ],
+      "id": "VecXeDgQRfgw"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 4,
+      "metadata": {
+        "id": "HyNSC9w52GXz",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 221
+        },
+        "outputId": "c6035530-91a7-43a5-d83d-e08b633cc4c8"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "<pyspark.sql.session.SparkSession at 0x7be642942920>"
+            ],
+            "text/html": [
+              "\n",
+              "            <div>\n",
+              "                <p><b>SparkSession - in-memory</b></p>\n",
+              "                \n",
+              "        <div>\n",
+              "            <p><b>SparkContext</b></p>\n",
+              "\n",
+              "            <p><a href=\"http://bbdbf3f81224:4040\">Spark UI</a></p>\n",
+              "\n",
+              "            <dl>\n",
+              "              <dt>Version</dt>\n",
+              "                <dd><code>v3.5.2</code></dd>\n",
+              "              <dt>Master</dt>\n",
+              "                <dd><code>local</code></dd>\n",
+              "              <dt>AppName</dt>\n",
+              "                <dd><code>Swiggy Data on Google Colab</code></dd>\n",
+              "            </dl>\n",
+              "        </div>\n",
+              "        \n",
+              "            </div>\n",
+              "        "
+            ]
+          },
+          "metadata": {},
+          "execution_count": 4
+        }
+      ],
+      "source": [
+        "spark"
+      ],
+      "id": "HyNSC9w52GXz"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "w7xyZkYAhAov"
+      },
+      "source": [
+        "##3. Loading and checking Data"
+      ],
+      "id": "w7xyZkYAhAov"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ISZpvDCRhOZ3"
+      },
+      "source": [
+        "### Connecting to Drive"
+      ],
+      "id": "ISZpvDCRhOZ3"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 5,
+      "metadata": {
+        "id": "Tc9tNxwIHu09",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "772ab692-dbbd-400e-fb75-9ebc91a6bfac"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Mounted at /content/drive\n"
+          ]
+        }
+      ],
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ],
+      "id": "Tc9tNxwIHu09"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 11,
+      "metadata": {
+        "id": "gXG3AjIjhEK4",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 74
+        },
+        "outputId": "b518894d-8aa2-4b63-9cc6-09b4722052d3"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.HTML object>"
+            ],
+            "text/html": [
+              "\n",
+              "     <input type=\"file\" id=\"files-24c821a7-a0ba-492e-b8b4-2c1436cd9f00\" name=\"files[]\" multiple disabled\n",
+              "        style=\"border:none\" />\n",
+              "     <output id=\"result-24c821a7-a0ba-492e-b8b4-2c1436cd9f00\">\n",
+              "      Upload widget is only available when the cell has been executed in the\n",
+              "      current browser session. Please rerun this cell to enable.\n",
+              "      </output>\n",
+              "      <script>// Copyright 2017 Google LLC\n",
+              "//\n",
+              "// Licensed under the Apache License, Version 2.0 (the \"License\");\n",
+              "// you may not use this file except in compliance with the License.\n",
+              "// You may obtain a copy of the License at\n",
+              "//\n",
+              "//      http://www.apache.org/licenses/LICENSE-2.0\n",
+              "//\n",
+              "// Unless required by applicable law or agreed to in writing, software\n",
+              "// distributed under the License is distributed on an \"AS IS\" BASIS,\n",
+              "// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n",
+              "// See the License for the specific language governing permissions and\n",
+              "// limitations under the License.\n",
+              "\n",
+              "/**\n",
+              " * @fileoverview Helpers for google.colab Python module.\n",
+              " */\n",
+              "(function(scope) {\n",
+              "function span(text, styleAttributes = {}) {\n",
+              "  const element = document.createElement('span');\n",
+              "  element.textContent = text;\n",
+              "  for (const key of Object.keys(styleAttributes)) {\n",
+              "    element.style[key] = styleAttributes[key];\n",
+              "  }\n",
+              "  return element;\n",
+              "}\n",
+              "\n",
+              "// Max number of bytes which will be uploaded at a time.\n",
+              "const MAX_PAYLOAD_SIZE = 100 * 1024;\n",
+              "\n",
+              "function _uploadFiles(inputId, outputId) {\n",
+              "  const steps = uploadFilesStep(inputId, outputId);\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  // Cache steps on the outputElement to make it available for the next call\n",
+              "  // to uploadFilesContinue from Python.\n",
+              "  outputElement.steps = steps;\n",
+              "\n",
+              "  return _uploadFilesContinue(outputId);\n",
+              "}\n",
+              "\n",
+              "// This is roughly an async generator (not supported in the browser yet),\n",
+              "// where there are multiple asynchronous steps and the Python side is going\n",
+              "// to poll for completion of each step.\n",
+              "// This uses a Promise to block the python side on completion of each step,\n",
+              "// then passes the result of the previous step as the input to the next step.\n",
+              "function _uploadFilesContinue(outputId) {\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  const steps = outputElement.steps;\n",
+              "\n",
+              "  const next = steps.next(outputElement.lastPromiseValue);\n",
+              "  return Promise.resolve(next.value.promise).then((value) => {\n",
+              "    // Cache the last promise value to make it available to the next\n",
+              "    // step of the generator.\n",
+              "    outputElement.lastPromiseValue = value;\n",
+              "    return next.value.response;\n",
+              "  });\n",
+              "}\n",
+              "\n",
+              "/**\n",
+              " * Generator function which is called between each async step of the upload\n",
+              " * process.\n",
+              " * @param {string} inputId Element ID of the input file picker element.\n",
+              " * @param {string} outputId Element ID of the output display.\n",
+              " * @return {!Iterable<!Object>} Iterable of next steps.\n",
+              " */\n",
+              "function* uploadFilesStep(inputId, outputId) {\n",
+              "  const inputElement = document.getElementById(inputId);\n",
+              "  inputElement.disabled = false;\n",
+              "\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  outputElement.innerHTML = '';\n",
+              "\n",
+              "  const pickedPromise = new Promise((resolve) => {\n",
+              "    inputElement.addEventListener('change', (e) => {\n",
+              "      resolve(e.target.files);\n",
+              "    });\n",
+              "  });\n",
+              "\n",
+              "  const cancel = document.createElement('button');\n",
+              "  inputElement.parentElement.appendChild(cancel);\n",
+              "  cancel.textContent = 'Cancel upload';\n",
+              "  const cancelPromise = new Promise((resolve) => {\n",
+              "    cancel.onclick = () => {\n",
+              "      resolve(null);\n",
+              "    };\n",
+              "  });\n",
+              "\n",
+              "  // Wait for the user to pick the files.\n",
+              "  const files = yield {\n",
+              "    promise: Promise.race([pickedPromise, cancelPromise]),\n",
+              "    response: {\n",
+              "      action: 'starting',\n",
+              "    }\n",
+              "  };\n",
+              "\n",
+              "  cancel.remove();\n",
+              "\n",
+              "  // Disable the input element since further picks are not allowed.\n",
+              "  inputElement.disabled = true;\n",
+              "\n",
+              "  if (!files) {\n",
+              "    return {\n",
+              "      response: {\n",
+              "        action: 'complete',\n",
+              "      }\n",
+              "    };\n",
+              "  }\n",
+              "\n",
+              "  for (const file of files) {\n",
+              "    const li = document.createElement('li');\n",
+              "    li.append(span(file.name, {fontWeight: 'bold'}));\n",
+              "    li.append(span(\n",
+              "        `(${file.type || 'n/a'}) - ${file.size} bytes, ` +\n",
+              "        `last modified: ${\n",
+              "            file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() :\n",
+              "                                    'n/a'} - `));\n",
+              "    const percent = span('0% done');\n",
+              "    li.appendChild(percent);\n",
+              "\n",
+              "    outputElement.appendChild(li);\n",
+              "\n",
+              "    const fileDataPromise = new Promise((resolve) => {\n",
+              "      const reader = new FileReader();\n",
+              "      reader.onload = (e) => {\n",
+              "        resolve(e.target.result);\n",
+              "      };\n",
+              "      reader.readAsArrayBuffer(file);\n",
+              "    });\n",
+              "    // Wait for the data to be ready.\n",
+              "    let fileData = yield {\n",
+              "      promise: fileDataPromise,\n",
+              "      response: {\n",
+              "        action: 'continue',\n",
+              "      }\n",
+              "    };\n",
+              "\n",
+              "    // Use a chunked sending to avoid message size limits. See b/62115660.\n",
+              "    let position = 0;\n",
+              "    do {\n",
+              "      const length = Math.min(fileData.byteLength - position, MAX_PAYLOAD_SIZE);\n",
+              "      const chunk = new Uint8Array(fileData, position, length);\n",
+              "      position += length;\n",
+              "\n",
+              "      const base64 = btoa(String.fromCharCode.apply(null, chunk));\n",
+              "      yield {\n",
+              "        response: {\n",
+              "          action: 'append',\n",
+              "          file: file.name,\n",
+              "          data: base64,\n",
+              "        },\n",
+              "      };\n",
+              "\n",
+              "      let percentDone = fileData.byteLength === 0 ?\n",
+              "          100 :\n",
+              "          Math.round((position / fileData.byteLength) * 100);\n",
+              "      percent.textContent = `${percentDone}% done`;\n",
+              "\n",
+              "    } while (position < fileData.byteLength);\n",
+              "  }\n",
+              "\n",
+              "  // All done.\n",
+              "  yield {\n",
+              "    response: {\n",
+              "      action: 'complete',\n",
+              "    }\n",
+              "  };\n",
+              "}\n",
+              "\n",
+              "scope.google = scope.google || {};\n",
+              "scope.google.colab = scope.google.colab || {};\n",
+              "scope.google.colab._files = {\n",
+              "  _uploadFiles,\n",
+              "  _uploadFilesContinue,\n",
+              "};\n",
+              "})(self);\n",
+              "</script> "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Saving Swiggy_Analysis_Source_File.csv to Swiggy_Analysis_Source_File.csv\n"
+          ]
+        }
+      ],
+      "source": [
+        "from google.colab import files\n",
+        "import pandas as pd\n",
+        "import io\n",
+        "\n",
+        "uploaded = files.upload()\n",
+        "dataset = pd.read_csv(io.BytesIO(uploaded['Swiggy_Analysis_Source_File.csv']), encoding='ISO-8859-1')"
+      ],
+      "id": "gXG3AjIjhEK4"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Vjc8B9ruwl3v"
+      },
+      "source": [
+        "###4. Analysis"
+      ],
+      "id": "Vjc8B9ruwl3v"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 14,
+      "metadata": {
+        "id": "adVxE64zWmww",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "30f92e73-c9e3-47aa-a404-8b25df3d979d"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "root\n",
+            " |-- Restaurant Name: string (nullable = true)\n",
+            " |-- City: string (nullable = true)\n",
+            " |-- Locality: string (nullable = true)\n",
+            " |-- Cuisines: string (nullable = true)\n",
+            " |-- Average Cost for two: long (nullable = true)\n",
+            " |-- Has Table booking: string (nullable = true)\n",
+            " |-- Has Online delivery: string (nullable = true)\n",
+            " |--  Rating Stars out of 5: double (nullable = true)\n",
+            " |-- Rating in text: string (nullable = true)\n",
+            " |-- Price range: long (nullable = true)\n",
+            " |-- Votes: long (nullable = true)\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Swiggy_DF = spark.createDataFrame(dataset)\n",
+        "Swiggy_DF.printSchema()"
+      ],
+      "id": "adVxE64zWmww"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 15,
+      "metadata": {
+        "id": "pWxU-xNKWmuH",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "9d02cecc-dbd8-4659-f8d7-f1f7a48ee4c8"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------------+---------+--------------------+-------------+--------------------+-----------------+-------------------+----------------------+--------------+-----------+-----+\n",
+            "|     Restaurant Name|     City|            Locality|     Cuisines|Average Cost for two|Has Table booking|Has Online delivery| Rating Stars out of 5|Rating in text|Price range|Votes|\n",
+            "+--------------------+---------+--------------------+-------------+--------------------+-----------------+-------------------+----------------------+--------------+-----------+-----+\n",
+            "|    Sultans of Spice|Bangalore|BluPetal Hotel, K...| North Indian|                1300|              Yes|                Yes|                   4.1|     Very Good|          3|  314|\n",
+            "|The Fatty Bao - A...|Bangalore|         Indiranagar|        Asian|                2400|              Yes|                Yes|                   4.7|     Excellent|          4|  591|\n",
+            "|                Toit|Bangalore|         Indiranagar|      Italian|                2000|               No|                 No|                   4.8|     Excellent|          4|  270|\n",
+            "| Three Dots & A Dash|Bangalore|         Indiranagar|     European|                1300|              Yes|                 No|                   3.9|          Good|          3|  365|\n",
+            "|    Bombay Brasserie|Bangalore|         Indiranagar|Modern Indian|                1500|               No|                Yes|                   4.2|     Very Good|          3|  229|\n",
+            "|    Glen's Bakehouse|Bangalore|         Indiranagar|       Bakery|                 800|               No|                 No|                   4.0|     Very Good|          2|  336|\n",
+            "|              Onesta|Bangalore|         Indiranagar|    Fast Food|                 600|               No|                Yes|                   4.3|     Very Good|          2|  520|\n",
+            "|              Onesta|Bangalore|            JP Nagar|    Fast Food|                 600|               No|                 No|                   4.6|     Excellent|          2|  677|\n",
+            "|  ECHOES Koramangala|Bangalore|Koramangala 5th B...|  Continental|                 950|               No|                 No|                   4.7|     Excellent|          2|  621|\n",
+            "|            Truffles|Bangalore|Koramangala 5th B...|     American|                 800|               No|                Yes|                   4.7|     Excellent|          2|  532|\n",
+            "|     The Black Pearl|Bangalore|Koramangala 5th B...| North Indian|                1400|              Yes|                 No|                   4.1|     Very Good|          3| 1070|\n",
+            "|          Eat Street|Bangalore|Koramangala 6th B...| North Indian|                 400|               No|                Yes|                   4.3|     Very Good|          1|  488|\n",
+            "|  Koramangala Social|Bangalore|Koramangala 7th B...|  Continental|                1500|               No|                 No|                   4.5|     Excellent|          3|  294|\n",
+            "|AB's - Absolute B...|Bangalore|        Marathahalli|     European|                1400|               No|                 No|                   4.6|     Excellent|          3|  458|\n",
+            "|            Flechazo|Bangalore|        Marathahalli|        Asian|                1200|              Yes|                 No|                   4.4|     Very Good|          3|  223|\n",
+            "+--------------------+---------+--------------------+-------------+--------------------+-----------------+-------------------+----------------------+--------------+-----------+-----+\n",
+            "only showing top 15 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Swiggy_DF.show(15)"
+      ],
+      "id": "pWxU-xNKWmuH"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 16,
+      "metadata": {
+        "id": "FhVjCtrD2ug8"
+      },
+      "outputs": [],
+      "source": [
+        "#Replace the white Spaces with UnderScrol\n",
+        "columns=Swiggy_DF.columns\n",
+        "converter=lambda x:x.replace(' ','_')\n",
+        "columns=list(map(converter,columns))"
+      ],
+      "id": "FhVjCtrD2ug8"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 17,
+      "metadata": {
+        "id": "mwhKBnF329PV"
+      },
+      "outputs": [],
+      "source": [
+        "Swiggy_DF=Swiggy_DF.toDF(*columns)"
+      ],
+      "id": "mwhKBnF329PV"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 18,
+      "metadata": {
+        "id": "I9SgHIJJ22gr",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "3c30d36b-550f-4e70-e0c7-9dc9b73ad4d9"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------------+---------+--------------------+-------------+--------------------+-----------------+-------------------+----------------------+--------------+-----------+-----+\n",
+            "|     Restaurant_Name|     City|            Locality|     Cuisines|Average_Cost_for_two|Has_Table_booking|Has_Online_delivery|_Rating_Stars_out_of_5|Rating_in_text|Price_range|Votes|\n",
+            "+--------------------+---------+--------------------+-------------+--------------------+-----------------+-------------------+----------------------+--------------+-----------+-----+\n",
+            "|    Sultans of Spice|Bangalore|BluPetal Hotel, K...| North Indian|                1300|              Yes|                Yes|                   4.1|     Very Good|          3|  314|\n",
+            "|The Fatty Bao - A...|Bangalore|         Indiranagar|        Asian|                2400|              Yes|                Yes|                   4.7|     Excellent|          4|  591|\n",
+            "|                Toit|Bangalore|         Indiranagar|      Italian|                2000|               No|                 No|                   4.8|     Excellent|          4|  270|\n",
+            "| Three Dots & A Dash|Bangalore|         Indiranagar|     European|                1300|              Yes|                 No|                   3.9|          Good|          3|  365|\n",
+            "|    Bombay Brasserie|Bangalore|         Indiranagar|Modern Indian|                1500|               No|                Yes|                   4.2|     Very Good|          3|  229|\n",
+            "|    Glen's Bakehouse|Bangalore|         Indiranagar|       Bakery|                 800|               No|                 No|                   4.0|     Very Good|          2|  336|\n",
+            "|              Onesta|Bangalore|         Indiranagar|    Fast Food|                 600|               No|                Yes|                   4.3|     Very Good|          2|  520|\n",
+            "|              Onesta|Bangalore|            JP Nagar|    Fast Food|                 600|               No|                 No|                   4.6|     Excellent|          2|  677|\n",
+            "|  ECHOES Koramangala|Bangalore|Koramangala 5th B...|  Continental|                 950|               No|                 No|                   4.7|     Excellent|          2|  621|\n",
+            "|            Truffles|Bangalore|Koramangala 5th B...|     American|                 800|               No|                Yes|                   4.7|     Excellent|          2|  532|\n",
+            "+--------------------+---------+--------------------+-------------+--------------------+-----------------+-------------------+----------------------+--------------+-----------+-----+\n",
+            "only showing top 10 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Swiggy_DF.show(10)"
+      ],
+      "id": "I9SgHIJJ22gr"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 19,
+      "metadata": {
+        "id": "7U7rAYkoWmrh",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "539eaa4f-16ff-4042-d14a-ddfe64b304b0"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "258"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 19
+        }
+      ],
+      "source": [
+        "Swiggy_DF.count()"
+      ],
+      "id": "7U7rAYkoWmrh"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "592a4488"
+      },
+      "source": [
+        "## Populating Dimension Tables"
+      ],
+      "id": "592a4488"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fde6dfaf"
+      },
+      "source": [
+        "#### 1) City_Dim"
+      ],
+      "id": "fde6dfaf"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 20,
+      "metadata": {
+        "id": "4681f9f6"
+      },
+      "outputs": [],
+      "source": [
+        "from pyspark.sql.window import Window\n",
+        "from pyspark.sql.functions import row_number,col"
+      ],
+      "id": "4681f9f6"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 21,
+      "metadata": {
+        "id": "3997e0f5"
+      },
+      "outputs": [],
+      "source": [
+        "City_df=Swiggy_DF.select('City').distinct()"
+      ],
+      "id": "3997e0f5"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 22,
+      "metadata": {
+        "id": "9a62a30e",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "0e59f144-0c8e-44ca-e3cf-6f0986e72beb"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+----------+\n",
+            "|      City|\n",
+            "+----------+\n",
+            "| Bangalore|\n",
+            "|     Patna|\n",
+            "|   Chennai|\n",
+            "|   Lucknow|\n",
+            "|    Mumbai|\n",
+            "|       Goa|\n",
+            "|   Kolkata|\n",
+            "|     Surat|\n",
+            "|      Pune|\n",
+            "|Chandigarh|\n",
+            "| Hyderabad|\n",
+            "|  Guwahati|\n",
+            "|    Jaipur|\n",
+            "+----------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "City_df.show()"
+      ],
+      "id": "9a62a30e"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 23,
+      "metadata": {
+        "id": "c1dfc552"
+      },
+      "outputs": [],
+      "source": [
+        "wind=Window.orderBy(City_df['City'].asc())"
+      ],
+      "id": "c1dfc552"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 24,
+      "metadata": {
+        "id": "863b8dd3"
+      },
+      "outputs": [],
+      "source": [
+        "city_dm_Table=City_df.withColumn('City_Id',row_number().over(wind))"
+      ],
+      "id": "863b8dd3"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 25,
+      "metadata": {
+        "id": "e85b0082",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "829ab705-bd24-4eea-8a5c-2718fa70b8fc"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "root\n",
+            " |-- City: string (nullable = true)\n",
+            " |-- City_Id: integer (nullable = false)\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "city_dm_Table.printSchema()"
+      ],
+      "id": "e85b0082"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 26,
+      "metadata": {
+        "id": "333daf5c",
+        "scrolled": true,
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "fd306d36-7fa9-4442-fd5b-d3ff895e0331"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+----------+-------+\n",
+            "|      City|City_Id|\n",
+            "+----------+-------+\n",
+            "| Bangalore|      1|\n",
+            "|Chandigarh|      2|\n",
+            "|   Chennai|      3|\n",
+            "|       Goa|      4|\n",
+            "|  Guwahati|      5|\n",
+            "| Hyderabad|      6|\n",
+            "|    Jaipur|      7|\n",
+            "|   Kolkata|      8|\n",
+            "|   Lucknow|      9|\n",
+            "|    Mumbai|     10|\n",
+            "|     Patna|     11|\n",
+            "|      Pune|     12|\n",
+            "|     Surat|     13|\n",
+            "+----------+-------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "city_dm_Table.show()"
+      ],
+      "id": "333daf5c"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "78efdd3a"
+      },
+      "source": [
+        "#### 2) Restaurant Dimension Table"
+      ],
+      "id": "78efdd3a"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 27,
+      "metadata": {
+        "id": "1d39fec0"
+      },
+      "outputs": [],
+      "source": [
+        "rest_col=Swiggy_DF.select('Restaurant_Name').distinct()"
+      ],
+      "id": "1d39fec0"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 28,
+      "metadata": {
+        "id": "b06b3d39",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "11185ddf-86b7-4217-d65a-56b704493428"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------------+\n",
+            "|     Restaurant_Name|\n",
+            "+--------------------+\n",
+            "|            Chung Fa|\n",
+            "|             Bar Bar|\n",
+            "|Zolocrust - Hotel...|\n",
+            "|            Paradise|\n",
+            "|        Olive Bistro|\n",
+            "|            Flechazo|\n",
+            "|   The Night Factory|\n",
+            "|      Frozen Factory|\n",
+            "|    Sauticed Stories|\n",
+            "|        Uncle Jack's|\n",
+            "|               BarBQ|\n",
+            "|        The Food Lab|\n",
+            "|          Eat Street|\n",
+            "|           4 Seasons|\n",
+            "|     Taruveda Bistro|\n",
+            "|         Free Spirit|\n",
+            "|            Nawwarah|\n",
+            "|       Pind Balluchi|\n",
+            "|           Raj Rasoi|\n",
+            "| Three Dots & A Dash|\n",
+            "+--------------------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "rest_col.show()"
+      ],
+      "id": "b06b3d39"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 29,
+      "metadata": {
+        "id": "818015b3"
+      },
+      "outputs": [],
+      "source": [
+        "wind=Window.orderBy(rest_col['Restaurant_Name'].asc())"
+      ],
+      "id": "818015b3"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 30,
+      "metadata": {
+        "id": "8e4cd577"
+      },
+      "outputs": [],
+      "source": [
+        "restaurant_Dim_Table=rest_col.withColumn('Restaurant_Id',row_number().over(wind))"
+      ],
+      "id": "8e4cd577"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 31,
+      "metadata": {
+        "id": "0313b928",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "c058a64a-bfb7-4007-8ecc-9e4bfffee2d3"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------------+-------------+\n",
+            "|     Restaurant_Name|Restaurant_Id|\n",
+            "+--------------------+-------------+\n",
+            "|11th Avenue Cafe ...|            1|\n",
+            "|      145 Kala Ghoda|            2|\n",
+            "|          17 Degrees|            3|\n",
+            "|18 Degrees Resto ...|            4|\n",
+            "|      38 Degree East|            5|\n",
+            "|           4 Seasons|            6|\n",
+            "|  6 Ballygunge Place|            7|\n",
+            "|AB's - Absolute B...|            8|\n",
+            "|    Agent Jack's Bar|            9|\n",
+            "|            Angeethi|           10|\n",
+            "|             Antares|           11|\n",
+            "|              Apache|           12|\n",
+            "|Asia Kitchen by M...|           13|\n",
+            "|        Baba Au Rhum|           14|\n",
+            "|         Bansi Vihar|           15|\n",
+            "|             Bar Bar|           16|\n",
+            "|               BarBQ|           17|\n",
+            "|     Barbeque Nation|           18|\n",
+            "|      Barbeque Ville|           19|\n",
+            "|  Basil With A Twist|           20|\n",
+            "+--------------------+-------------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "restaurant_Dim_Table.show()"
+      ],
+      "id": "0313b928"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 32,
+      "metadata": {
+        "id": "5311bb6f",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "0ada8136-7c59-4266-ea2d-71ef3ead0725"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "226"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 32
+        }
+      ],
+      "source": [
+        "restaurant_Dim_Table.count()"
+      ],
+      "id": "5311bb6f"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "2cd4da0d"
+      },
+      "source": [
+        "#### 3) Locality Dimension Table"
+      ],
+      "id": "2cd4da0d"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 33,
+      "metadata": {
+        "id": "dd88a3f4"
+      },
+      "outputs": [],
+      "source": [
+        "local_col=Swiggy_DF.select('Locality').distinct()"
+      ],
+      "id": "dd88a3f4"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 34,
+      "metadata": {
+        "id": "c5984977",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "f4b70207-7023-47bb-d16a-717d2124dfcc"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "137"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 34
+        }
+      ],
+      "source": [
+        "local_col.count()"
+      ],
+      "id": "c5984977"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 35,
+      "metadata": {
+        "id": "ae83062e"
+      },
+      "outputs": [],
+      "source": [
+        "wins=Window.orderBy(local_col['Locality'].asc())"
+      ],
+      "id": "ae83062e"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 36,
+      "metadata": {
+        "id": "3aac5cc0"
+      },
+      "outputs": [],
+      "source": [
+        "locality_dm_table=local_col.withColumn('Locality_Id',row_number().over(wins))"
+      ],
+      "id": "3aac5cc0"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 37,
+      "metadata": {
+        "id": "a19bb23a",
+        "scrolled": true,
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "fb455f21-6976-4af8-9544-b103642d3f2c"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------------+-----------+\n",
+            "|            Locality|Locality_Id|\n",
+            "+--------------------+-----------+\n",
+            "|12th Square Build...|          1|\n",
+            "|Acropolis Mall, K...|          2|\n",
+            "|          Adajan Gam|          3|\n",
+            "|               Adyar|          4|\n",
+            "|            Aminabad|          5|\n",
+            "|           Anandpuri|          6|\n",
+            "|Anil Plaza, Chris...|          7|\n",
+            "|              Anjuna|          8|\n",
+            "|Anjuna Beach, Anjuna|          9|\n",
+            "|     Anna Nagar East|         10|\n",
+            "|             Arambol|         11|\n",
+            "|         Ashok Nagar|         12|\n",
+            "|               Athwa|         13|\n",
+            "|          Azad Nagar|         14|\n",
+            "|                Baga|         15|\n",
+            "|Balewadi High Str...|         16|\n",
+            "|          Ballygunge|         17|\n",
+            "|               Baner|         18|\n",
+            "|       Banjara Hills|         19|\n",
+            "|          Betalbatim|         20|\n",
+            "+--------------------+-----------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "locality_dm_table.show()"
+      ],
+      "id": "a19bb23a"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 38,
+      "metadata": {
+        "id": "83ead939",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "6cdf0c93-bc12-4e2c-f08e-197314333b3e"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "137"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 38
+        }
+      ],
+      "source": [
+        "locality_dm_table.count()"
+      ],
+      "id": "83ead939"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ec35abfa"
+      },
+      "source": [
+        "#### 4) Cuisines dimension Table"
+      ],
+      "id": "ec35abfa"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 39,
+      "metadata": {
+        "id": "f635c73a",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "c0fde9a0-5222-4b43-b760-9c6791d92710"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "root\n",
+            " |-- Restaurant_Name: string (nullable = true)\n",
+            " |-- City: string (nullable = true)\n",
+            " |-- Locality: string (nullable = true)\n",
+            " |-- Cuisines: string (nullable = true)\n",
+            " |-- Average_Cost_for_two: long (nullable = true)\n",
+            " |-- Has_Table_booking: string (nullable = true)\n",
+            " |-- Has_Online_delivery: string (nullable = true)\n",
+            " |-- _Rating_Stars_out_of_5: double (nullable = true)\n",
+            " |-- Rating_in_text: string (nullable = true)\n",
+            " |-- Price_range: long (nullable = true)\n",
+            " |-- Votes: long (nullable = true)\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Swiggy_DF.printSchema()"
+      ],
+      "id": "f635c73a"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 40,
+      "metadata": {
+        "id": "aaeee846"
+      },
+      "outputs": [],
+      "source": [
+        "Cousine_col=Swiggy_DF.select('Cuisines').distinct()"
+      ],
+      "id": "aaeee846"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 41,
+      "metadata": {
+        "id": "17152f46",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "d0bf2b65-6a82-4a04-e9ad-703dc1356929"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------+\n",
+            "|      Cuisines|\n",
+            "+--------------+\n",
+            "|       Mexican|\n",
+            "|        Bakery|\n",
+            "|      European|\n",
+            "|Charcoal Grill|\n",
+            "|       Biryani|\n",
+            "|       Chinese|\n",
+            "|   Continental|\n",
+            "|       Mughlai|\n",
+            "|      Gujarati|\n",
+            "|    Hyderabadi|\n",
+            "|      Japanese|\n",
+            "|     Fast Food|\n",
+            "|          Goan|\n",
+            "|       Italian|\n",
+            "|      Lebanese|\n",
+            "| Modern Indian|\n",
+            "|       Bengali|\n",
+            "|  North Indian|\n",
+            "|      Desserts|\n",
+            "|  Healthy Food|\n",
+            "+--------------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Cousine_col.show()"
+      ],
+      "id": "17152f46"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 42,
+      "metadata": {
+        "id": "de347d7b"
+      },
+      "outputs": [],
+      "source": [
+        "wind=Window.orderBy(Cousine_col['Cuisines'].asc())\n",
+        "Cuisines_dm_table=Cousine_col.withColumn('Cuisines_id',row_number().over(wind))"
+      ],
+      "id": "de347d7b"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 43,
+      "metadata": {
+        "id": "70416fb9",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "09075424-f6e3-44fe-ebe5-bf2a1508a774"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------+-----------+\n",
+            "|      Cuisines|Cuisines_id|\n",
+            "+--------------+-----------+\n",
+            "|      American|          1|\n",
+            "|         Asian|          2|\n",
+            "|        Bakery|          3|\n",
+            "|       Bengali|          4|\n",
+            "|       Biryani|          5|\n",
+            "|          Cafe|          6|\n",
+            "|Charcoal Grill|          7|\n",
+            "|       Chinese|          8|\n",
+            "|   Continental|          9|\n",
+            "|      Desserts|         10|\n",
+            "|      European|         11|\n",
+            "|     Fast Food|         12|\n",
+            "|          Goan|         13|\n",
+            "|      Gujarati|         14|\n",
+            "|  Healthy Food|         15|\n",
+            "|    Hyderabadi|         16|\n",
+            "|       Italian|         17|\n",
+            "|      Japanese|         18|\n",
+            "|      Lebanese|         19|\n",
+            "| Mediterranean|         20|\n",
+            "+--------------+-----------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Cuisines_dm_table.show()"
+      ],
+      "id": "70416fb9"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 44,
+      "metadata": {
+        "id": "42099c75",
+        "scrolled": true,
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "f061f40d-92e9-4282-8718-77971be2aeeb"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "28"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 44
+        }
+      ],
+      "source": [
+        "Cuisines_dm_table.count()"
+      ],
+      "id": "42099c75"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "5fe66d0c"
+      },
+      "source": [
+        "#### 5) Table Booking Dimension Table"
+      ],
+      "id": "5fe66d0c"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 45,
+      "metadata": {
+        "id": "a55f9163",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "89e519bd-fe09-477a-9b7c-89ea9c9f2e49"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----------------+\n",
+            "|Has_Table_booking|\n",
+            "+-----------------+\n",
+            "|               No|\n",
+            "|              Yes|\n",
+            "+-----------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "TableBooking_col=Swiggy_DF.select('Has_Table_booking').distinct()\n",
+        "TableBooking_col.show()"
+      ],
+      "id": "a55f9163"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 46,
+      "metadata": {
+        "id": "99b8b1a8"
+      },
+      "outputs": [],
+      "source": [
+        "wind=Window.orderBy(TableBooking_col['Has_Table_booking'].desc())\n",
+        "TableBooking_dm_table=TableBooking_col.withColumn('Table_booking_Id',row_number().over(wind))"
+      ],
+      "id": "99b8b1a8"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 47,
+      "metadata": {
+        "id": "cd52170a",
+        "scrolled": false,
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "c0870392-e263-43ce-947a-45a1237cf706"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----------------+----------------+\n",
+            "|Has_Table_booking|Table_booking_Id|\n",
+            "+-----------------+----------------+\n",
+            "|              Yes|               1|\n",
+            "|               No|               2|\n",
+            "+-----------------+----------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "TableBooking_dm_table.show()"
+      ],
+      "id": "cd52170a"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 48,
+      "metadata": {
+        "id": "722d3ccd",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "2db5750e-53db-41a9-c233-8ca3356db00f"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "2"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 48
+        }
+      ],
+      "source": [
+        "TableBooking_dm_table.count()"
+      ],
+      "id": "722d3ccd"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "2b4c7d22"
+      },
+      "source": [
+        "#### 6) Delivery_Available_Dm_Table"
+      ],
+      "id": "2b4c7d22"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 49,
+      "metadata": {
+        "id": "6fffdd79",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "11847a62-decf-4f5e-c317-4f561f1b4023"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-------------------+\n",
+            "|Has_Online_delivery|\n",
+            "+-------------------+\n",
+            "|                 No|\n",
+            "|                Yes|\n",
+            "+-------------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Delivery_Available_col=Swiggy_DF.select('Has_Online_delivery').distinct()\n",
+        "Delivery_Available_col.show()"
+      ],
+      "id": "6fffdd79"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 50,
+      "metadata": {
+        "id": "e6838b4f"
+      },
+      "outputs": [],
+      "source": [
+        "wind=Window.orderBy(Delivery_Available_col['Has_Online_delivery'].desc())\n",
+        "Delivery_Available_dm_table=Delivery_Available_col.withColumn('Delivery_ID',row_number().over(wind))"
+      ],
+      "id": "e6838b4f"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 51,
+      "metadata": {
+        "id": "432022cf",
+        "scrolled": true,
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "63e16e02-4f62-442c-b9f8-d81c031fc827"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-------------------+-----------+\n",
+            "|Has_Online_delivery|Delivery_ID|\n",
+            "+-------------------+-----------+\n",
+            "|                Yes|          1|\n",
+            "|                 No|          2|\n",
+            "+-------------------+-----------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Delivery_Available_dm_table.show()"
+      ],
+      "id": "432022cf"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "369b69c8"
+      },
+      "source": [
+        "#### 7) Rating Dimension Table"
+      ],
+      "id": "369b69c8"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 52,
+      "metadata": {
+        "id": "e441ba24",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "800d30fe-2000-42a9-f53d-cbd2a60de681"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+----------------------+--------------+\n",
+            "|_Rating_Stars_out_of_5|Rating_in_text|\n",
+            "+----------------------+--------------+\n",
+            "|                   4.6|     Excellent|\n",
+            "|                   4.8|     Excellent|\n",
+            "|                   3.8|          Good|\n",
+            "|                   4.4|     Very Good|\n",
+            "|                   2.6|       Average|\n",
+            "|                   4.9|     Excellent|\n",
+            "|                   3.3|       Average|\n",
+            "|                   4.5|     Excellent|\n",
+            "|                   3.1|       Average|\n",
+            "|                   4.0|     Very Good|\n",
+            "|                   4.3|     Very Good|\n",
+            "|                   3.5|          Good|\n",
+            "|                   3.9|          Good|\n",
+            "|                   3.6|          Good|\n",
+            "|                   3.4|       Average|\n",
+            "|                   4.1|     Very Good|\n",
+            "|                   3.7|          Good|\n",
+            "|                   4.7|     Excellent|\n",
+            "|                   4.2|     Very Good|\n",
+            "+----------------------+--------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Rating_col=Swiggy_DF.select('_Rating_Stars_out_of_5','Rating_in_text').distinct()\n",
+        "Rating_col.show()"
+      ],
+      "id": "e441ba24"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 53,
+      "metadata": {
+        "id": "f67c8f55"
+      },
+      "outputs": [],
+      "source": [
+        "wip=Window.orderBy(Rating_col['Rating_in_text'].asc())"
+      ],
+      "id": "f67c8f55"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 54,
+      "metadata": {
+        "id": "7b0f3c63"
+      },
+      "outputs": [],
+      "source": [
+        "Rating_dm_table=Rating_col.withColumn('Rating_id',row_number().over(wip))"
+      ],
+      "id": "7b0f3c63"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 55,
+      "metadata": {
+        "id": "c7b6714a",
+        "scrolled": true,
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "9980ebdb-be57-4082-8b6f-7c86b0b5238d"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+----------------------+--------------+---------+\n",
+            "|_Rating_Stars_out_of_5|Rating_in_text|Rating_id|\n",
+            "+----------------------+--------------+---------+\n",
+            "|                   2.6|       Average|        1|\n",
+            "|                   3.3|       Average|        2|\n",
+            "|                   3.1|       Average|        3|\n",
+            "|                   3.4|       Average|        4|\n",
+            "|                   4.6|     Excellent|        5|\n",
+            "|                   4.8|     Excellent|        6|\n",
+            "|                   4.9|     Excellent|        7|\n",
+            "|                   4.5|     Excellent|        8|\n",
+            "|                   4.7|     Excellent|        9|\n",
+            "|                   3.8|          Good|       10|\n",
+            "|                   3.5|          Good|       11|\n",
+            "|                   3.9|          Good|       12|\n",
+            "|                   3.6|          Good|       13|\n",
+            "|                   3.7|          Good|       14|\n",
+            "|                   4.4|     Very Good|       15|\n",
+            "|                   4.0|     Very Good|       16|\n",
+            "|                   4.3|     Very Good|       17|\n",
+            "|                   4.1|     Very Good|       18|\n",
+            "|                   4.2|     Very Good|       19|\n",
+            "+----------------------+--------------+---------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Rating_dm_table.show()"
+      ],
+      "id": "c7b6714a"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Ji-GrChkSW0Z"
+      },
+      "source": [
+        "## Fact table\n"
+      ],
+      "id": "Ji-GrChkSW0Z"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 56,
+      "metadata": {
+        "id": "xRtyNVvDYOR3",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "d9466c61-cf95-4985-ffef-93b4b3b17dab"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+----------------------+-------------------+-----------------+-------------+--------------------+--------------------+---------+--------------------+--------------+-----------+-----+-------+-------------+-----------+-----------+----------------+-----------+--------------+---------+\n",
+            "|_Rating_Stars_out_of_5|Has_Online_delivery|Has_Table_booking|     Cuisines|            Locality|     Restaurant_Name|     City|Average_Cost_for_two|Rating_in_text|Price_range|Votes|City_Id|Restaurant_Id|Locality_Id|Cuisines_id|Table_booking_Id|Delivery_ID|Rating_in_text|Rating_id|\n",
+            "+----------------------+-------------------+-----------------+-------------+--------------------+--------------------+---------+--------------------+--------------+-----------+-----+-------+-------------+-----------+-----------+----------------+-----------+--------------+---------+\n",
+            "|                   4.1|                Yes|              Yes| North Indian|BluPetal Hotel, K...|    Sultans of Spice|Bangalore|                1300|     Very Good|          3|  314|      1|          167|         21|         24|               1|          1|     Very Good|       18|\n",
+            "|                   4.7|                Yes|              Yes|        Asian|         Indiranagar|The Fatty Bao - A...|Bangalore|                2400|     Excellent|          4|  591|      1|          190|         57|          2|               1|          1|     Excellent|        9|\n",
+            "|                   4.8|                 No|               No|      Italian|         Indiranagar|                Toit|Bangalore|                2000|     Excellent|          4|  270|      1|          212|         57|         17|               2|          2|     Excellent|        6|\n",
+            "|                   3.9|                 No|              Yes|     European|         Indiranagar| Three Dots & A Dash|Bangalore|                1300|          Good|          3|  365|      1|          210|         57|         11|               1|          2|          Good|       12|\n",
+            "|                   4.2|                Yes|               No|Modern Indian|         Indiranagar|    Bombay Brasserie|Bangalore|                1500|     Very Good|          3|  229|      1|           26|         57|         22|               2|          1|     Very Good|       19|\n",
+            "|                   4.0|                 No|               No|       Bakery|         Indiranagar|    Glen's Bakehouse|Bangalore|                 800|     Very Good|          2|  336|      1|           75|         57|          3|               2|          2|     Very Good|       16|\n",
+            "|                   4.3|                Yes|               No|    Fast Food|         Indiranagar|              Onesta|Bangalore|                 600|     Very Good|          2|  520|      1|          130|         57|         12|               2|          1|     Very Good|       17|\n",
+            "|                   4.6|                 No|               No|    Fast Food|            JP Nagar|              Onesta|Bangalore|                 600|     Excellent|          2|  677|      1|          130|         59|         12|               2|          2|     Excellent|        5|\n",
+            "|                   4.7|                 No|               No|  Continental|Koramangala 5th B...|  ECHOES Koramangala|Bangalore|                 950|     Excellent|          2|  621|      1|           58|         67|          9|               2|          2|     Excellent|        9|\n",
+            "|                   4.7|                Yes|               No|     American|Koramangala 5th B...|            Truffles|Bangalore|                 800|     Excellent|          2|  532|      1|          213|         67|          1|               2|          1|     Excellent|        9|\n",
+            "|                   4.1|                 No|              Yes| North Indian|Koramangala 5th B...|     The Black Pearl|Bangalore|                1400|     Very Good|          3| 1070|      1|          182|         67|         24|               1|          2|     Very Good|       18|\n",
+            "|                   4.3|                Yes|               No| North Indian|Koramangala 6th B...|          Eat Street|Bangalore|                 400|     Very Good|          1|  488|      1|           59|         68|         24|               2|          1|     Very Good|       17|\n",
+            "|                   4.5|                 No|               No|  Continental|Koramangala 7th B...|  Koramangala Social|Bangalore|                1500|     Excellent|          3|  294|      1|           96|         69|          9|               2|          2|     Excellent|        8|\n",
+            "|                   4.6|                 No|               No|     European|        Marathahalli|AB's - Absolute B...|Bangalore|                1400|     Excellent|          3|  458|      1|            8|         83|         11|               2|          2|     Excellent|        5|\n",
+            "|                   4.4|                 No|              Yes|        Asian|        Marathahalli|            Flechazo|Bangalore|                1200|     Very Good|          3|  223|      1|           68|         83|          2|               1|          2|     Very Good|       15|\n",
+            "|                   4.6|                 No|               No|    Fast Food|        New BEL Road|              Onesta|Bangalore|                 600|     Excellent|          2|   29|      1|          130|         88|         12|               2|          2|     Excellent|        5|\n",
+            "|                   4.2|                 No|               No|  Continental|      Residency Road|           Communiti|Bangalore|                1200|     Very Good|          3|   72|      1|           51|        105|          9|               2|          2|     Very Good|       19|\n",
+            "|                   4.5|                Yes|              Yes|    Fast Food|       Sarjapur Road|         Big Brewsky|Bangalore|                1800|     Excellent|          3|  211|      1|           21|        110|         12|               1|          1|     Excellent|        8|\n",
+            "|                   3.9|                 No|               No|  Continental|       Sarjapur Road|                Hoot|Bangalore|                1400|          Good|          3|  118|      1|           83|        110|          9|               2|          2|          Good|       12|\n",
+            "|                   4.4|                 No|               No|Modern Indian|             UB City|          Farzi Cafe|Bangalore|                1500|     Very Good|          3|  392|      1|           63|        125|         22|               2|          2|     Very Good|       15|\n",
+            "+----------------------+-------------------+-----------------+-------------+--------------------+--------------------+---------+--------------------+--------------+-----------+-----+-------+-------------+-----------+-----------+----------------+-----------+--------------+---------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "joined_Swiggy_DF=Swiggy_DF.join(city_dm_Table, ['City'])\n",
+        "joined_Swiggy_DF=joined_Swiggy_DF.join(restaurant_Dim_Table, ['Restaurant_Name'])\n",
+        "joined_Swiggy_DF=joined_Swiggy_DF.join(locality_dm_table, ['Locality'])\n",
+        "joined_Swiggy_DF=joined_Swiggy_DF.join(Cuisines_dm_table, ['Cuisines'])\n",
+        "joined_Swiggy_DF=joined_Swiggy_DF.join(TableBooking_dm_table, ['Has_Table_booking'])\n",
+        "joined_Swiggy_DF=joined_Swiggy_DF.join(Delivery_Available_dm_table, ['Has_Online_delivery'])\n",
+        "joined_Swiggy_DF=joined_Swiggy_DF.join(Rating_dm_table, ['_Rating_Stars_out_of_5'])\n",
+        "joined_Swiggy_DF.show()"
+      ],
+      "id": "xRtyNVvDYOR3"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 57,
+      "metadata": {
+        "id": "XPSUDLgGWXKJ",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "17eedfbc-6b36-498a-c9b5-3d4f9e90332c"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "['_Rating_Stars_out_of_5',\n",
+              " 'Has_Online_delivery',\n",
+              " 'Has_Table_booking',\n",
+              " 'Cuisines',\n",
+              " 'Locality',\n",
+              " 'Restaurant_Name',\n",
+              " 'City',\n",
+              " 'Average_Cost_for_two',\n",
+              " 'Rating_in_text',\n",
+              " 'Price_range',\n",
+              " 'Votes',\n",
+              " 'City_Id',\n",
+              " 'Restaurant_Id',\n",
+              " 'Locality_Id',\n",
+              " 'Cuisines_id',\n",
+              " 'Table_booking_Id',\n",
+              " 'Delivery_ID',\n",
+              " 'Rating_in_text',\n",
+              " 'Rating_id']"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 57
+        }
+      ],
+      "source": [
+        "joined_Swiggy_DF.columns"
+      ],
+      "id": "XPSUDLgGWXKJ"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 58,
+      "metadata": {
+        "id": "ZNYxdiTtWDzM"
+      },
+      "outputs": [],
+      "source": [
+        "columns_lst=['Price_range','Votes','Average_Cost_for_two','City_Id','Restaurant_Id','Locality_Id','Cuisines_id','Table_booking_Id','Delivery_ID','Rating_id']"
+      ],
+      "id": "ZNYxdiTtWDzM"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 59,
+      "metadata": {
+        "id": "yyhQWoofSWdh"
+      },
+      "outputs": [],
+      "source": [
+        "Fact_Swiggy_new=joined_Swiggy_DF.select(columns_lst)"
+      ],
+      "id": "yyhQWoofSWdh"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 60,
+      "metadata": {
+        "id": "rLzRj_xoSWaH",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "3567701f-4aa8-41e8-f5d2-7f236fa81986"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----------+-----+--------------------+-------+-------------+-----------+-----------+----------------+-----------+---------+\n",
+            "|Price_range|Votes|Average_Cost_for_two|City_Id|Restaurant_Id|Locality_Id|Cuisines_id|Table_booking_Id|Delivery_ID|Rating_id|\n",
+            "+-----------+-----+--------------------+-------+-------------+-----------+-----------+----------------+-----------+---------+\n",
+            "|          3|  314|                1300|      1|          167|         21|         24|               1|          1|       18|\n",
+            "|          4|  591|                2400|      1|          190|         57|          2|               1|          1|        9|\n",
+            "|          4|  270|                2000|      1|          212|         57|         17|               2|          2|        6|\n",
+            "|          3|  365|                1300|      1|          210|         57|         11|               1|          2|       12|\n",
+            "|          3|  229|                1500|      1|           26|         57|         22|               2|          1|       19|\n",
+            "|          2|  336|                 800|      1|           75|         57|          3|               2|          2|       16|\n",
+            "|          2|  520|                 600|      1|          130|         57|         12|               2|          1|       17|\n",
+            "|          2|  677|                 600|      1|          130|         59|         12|               2|          2|        5|\n",
+            "|          2|  621|                 950|      1|           58|         67|          9|               2|          2|        9|\n",
+            "|          2|  532|                 800|      1|          213|         67|          1|               2|          1|        9|\n",
+            "|          3| 1070|                1400|      1|          182|         67|         24|               1|          2|       18|\n",
+            "|          1|  488|                 400|      1|           59|         68|         24|               2|          1|       17|\n",
+            "|          3|  294|                1500|      1|           96|         69|          9|               2|          2|        8|\n",
+            "|          3|  458|                1400|      1|            8|         83|         11|               2|          2|        5|\n",
+            "|          3|  223|                1200|      1|           68|         83|          2|               1|          2|       15|\n",
+            "|          2|   29|                 600|      1|          130|         88|         12|               2|          2|        5|\n",
+            "|          3|   72|                1200|      1|           51|        105|          9|               2|          2|       19|\n",
+            "|          3|  211|                1800|      1|           21|        110|         12|               1|          1|        8|\n",
+            "|          3|  118|                1400|      1|           83|        110|          9|               2|          2|       12|\n",
+            "|          3|  392|                1500|      1|           63|        125|         22|               2|          2|       15|\n",
+            "+-----------+-----+--------------------+-------+-------------+-----------+-----------+----------------+-----------+---------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Fact_Swiggy_new.show()"
+      ],
+      "id": "rLzRj_xoSWaH"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 61,
+      "metadata": {
+        "id": "UJHitZixSWXf"
+      },
+      "outputs": [],
+      "source": [
+        "wip=Window.orderBy(Fact_Swiggy_new['Average_Cost_for_two'].asc())"
+      ],
+      "id": "UJHitZixSWXf"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 62,
+      "metadata": {
+        "id": "UHDcefFMSVTS"
+      },
+      "outputs": [],
+      "source": [
+        "Fact_Swiggy=Fact_Swiggy_new.withColumn('Fact_id',row_number().over(wip))"
+      ],
+      "id": "UHDcefFMSVTS"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 63,
+      "metadata": {
+        "id": "KTP6Wxs-ZpeK",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "29a3af4f-c36a-4454-e885-06f83d204a51"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----------+-----+--------------------+-------+-------------+-----------+-----------+----------------+-----------+---------+-------+\n",
+            "|Price_range|Votes|Average_Cost_for_two|City_Id|Restaurant_Id|Locality_Id|Cuisines_id|Table_booking_Id|Delivery_ID|Rating_id|Fact_id|\n",
+            "+-----------+-----+--------------------+-------+-------------+-----------+-----------+----------------+-----------+---------+-------+\n",
+            "|          1|  360|                 200|      9|           70|         48|         10|               2|          2|        8|      1|\n",
+            "|          1|  123|                 250|     13|          121|         13|         27|               2|          2|       16|      2|\n",
+            "|          1| 1109|                 250|     13|          188|        132|         10|               2|          2|       13|      3|\n",
+            "|          1|  335|                 300|     11|           15|         43|         27|               2|          2|        4|      4|\n",
+            "|          1|  660|                 300|      9|           79|          5|         23|               2|          2|        7|      5|\n",
+            "|          3|  147|                 300|      5|            6|        127|          8|               2|          2|       13|      6|\n",
+            "|          1|   24|                 350|      3|           71|         65|         17|               2|          2|        5|      7|\n",
+            "|          2|  365|                 400|      9|          186|         48|          6|               2|          2|       18|      8|\n",
+            "|          2|  220|                 400|      9|           55|         50|         23|               2|          2|       15|      9|\n",
+            "|          2|  347|                 400|      9|          185|         50|          6|               2|          2|       18|     10|\n",
+            "|          1|  488|                 400|      1|           59|         68|         24|               2|          1|       17|     11|\n",
+            "|          1|   51|                 400|      5|            1|        127|          6|               2|          2|       18|     12|\n",
+            "|          2|   38|                 450|     11|          147|         63|          8|               2|          2|       13|     13|\n",
+            "|          1|   29|                 450|      3|          223|         49|          6|               2|          1|       19|     14|\n",
+            "|          2|  422|                 450|      9|           82|         48|          6|               2|          2|       12|     15|\n",
+            "|          2|  487|                 450|      9|           69|         48|          6|               2|          2|       17|     16|\n",
+            "|          1|    9|                 450|      2|          168|        113|         12|               2|          1|       16|     17|\n",
+            "|          2|  213|                 500|     11|           73|          6|          1|               2|          2|       11|     18|\n",
+            "|          2|  355|                 500|     11|           90|         45|         12|               2|          2|        2|     19|\n",
+            "|          2|  287|                 500|     11|          109|         45|         12|               2|          2|        4|     20|\n",
+            "+-----------+-----+--------------------+-------+-------------+-----------+-----------+----------------+-----------+---------+-------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Fact_Swiggy.show()"
+      ],
+      "id": "KTP6Wxs-ZpeK"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 64,
+      "metadata": {
+        "id": "o8y2lHKxbbMg",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "37062fa7-7d15-427c-f2fc-1e8e3cfb7829"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "['Price_range',\n",
+              " 'Votes',\n",
+              " 'Average_Cost_for_two',\n",
+              " 'City_Id',\n",
+              " 'Restaurant_Id',\n",
+              " 'Locality_Id',\n",
+              " 'Cuisines_id',\n",
+              " 'Table_booking_Id',\n",
+              " 'Delivery_ID',\n",
+              " 'Rating_id',\n",
+              " 'Fact_id']"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 64
+        }
+      ],
+      "source": [
+        "Fact_Swiggy.columns"
+      ],
+      "id": "o8y2lHKxbbMg"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 65,
+      "metadata": {
+        "id": "cIt_GQ_xZ_EH"
+      },
+      "outputs": [],
+      "source": [
+        "col_arrangement_lst=['Fact_id','City_Id','Locality_Id','Restaurant_Id','Cuisines_id',\n",
+        "                     'Average_Cost_for_two','Rating_id','Delivery_ID','Table_booking_Id',\n",
+        "                     'Votes','Price_range',]"
+      ],
+      "id": "cIt_GQ_xZ_EH"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 66,
+      "metadata": {
+        "id": "95iT2Omta314"
+      },
+      "outputs": [],
+      "source": [
+        "Fact_Swiggy=Fact_Swiggy.select(col_arrangement_lst)"
+      ],
+      "id": "95iT2Omta314"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 67,
+      "metadata": {
+        "id": "GKD4CKUQboDY",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "874f770f-518a-4820-bbe9-3b55a87fb0bb"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-------+-------+-----------+-------------+-----------+--------------------+---------+-----------+----------------+-----+-----------+\n",
+            "|Fact_id|City_Id|Locality_Id|Restaurant_Id|Cuisines_id|Average_Cost_for_two|Rating_id|Delivery_ID|Table_booking_Id|Votes|Price_range|\n",
+            "+-------+-------+-----------+-------------+-----------+--------------------+---------+-----------+----------------+-----+-----------+\n",
+            "|      1|      9|         48|           70|         10|                 200|        8|          2|               2|  360|          1|\n",
+            "|      2|     13|         13|          121|         27|                 250|       16|          2|               2|  123|          1|\n",
+            "|      3|     13|        132|          188|         10|                 250|       13|          2|               2| 1109|          1|\n",
+            "|      4|     11|         43|           15|         27|                 300|        4|          2|               2|  335|          1|\n",
+            "|      5|      9|          5|           79|         23|                 300|        7|          2|               2|  660|          1|\n",
+            "|      6|      5|        127|            6|          8|                 300|       13|          2|               2|  147|          3|\n",
+            "|      7|      3|         65|           71|         17|                 350|        5|          2|               2|   24|          1|\n",
+            "|      8|      9|         48|          186|          6|                 400|       18|          2|               2|  365|          2|\n",
+            "|      9|      9|         50|           55|         23|                 400|       15|          2|               2|  220|          2|\n",
+            "|     10|      9|         50|          185|          6|                 400|       18|          2|               2|  347|          2|\n",
+            "|     11|      1|         68|           59|         24|                 400|       17|          1|               2|  488|          1|\n",
+            "|     12|      5|        127|            1|          6|                 400|       18|          2|               2|   51|          1|\n",
+            "|     13|     11|         63|          147|          8|                 450|       13|          2|               2|   38|          2|\n",
+            "|     14|      3|         49|          223|          6|                 450|       19|          1|               2|   29|          1|\n",
+            "|     15|      9|         48|           82|          6|                 450|       12|          2|               2|  422|          2|\n",
+            "|     16|      9|         48|           69|          6|                 450|       17|          2|               2|  487|          2|\n",
+            "|     17|      2|        113|          168|         12|                 450|       16|          1|               2|    9|          1|\n",
+            "|     18|     11|          6|           73|          1|                 500|       11|          2|               2|  213|          2|\n",
+            "|     19|     11|         45|           90|         12|                 500|        2|          2|               2|  355|          2|\n",
+            "|     20|     11|         45|          109|         12|                 500|        4|          2|               2|  287|          2|\n",
+            "+-------+-------+-----------+-------------+-----------+--------------------+---------+-----------+----------------+-----+-----------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "Fact_Swiggy.show()"
+      ],
+      "id": "GKD4CKUQboDY"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "61087495"
+      },
+      "source": [
+        "## Count Of Restaurants ,City Wise"
+      ],
+      "id": "61087495"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 68,
+      "metadata": {
+        "id": "_PsssrBKcMbf"
+      },
+      "outputs": [],
+      "source": [
+        "joined_city_df=Fact_Swiggy.join(city_dm_Table, ['City_Id'])"
+      ],
+      "id": "_PsssrBKcMbf"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 69,
+      "metadata": {
+        "id": "oipJ-IChchqp",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "2adbe1b9-36ab-4438-c9a8-d8061e0d3bed"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-------+-------+-----------+-------------+-----------+--------------------+---------+-----------+----------------+-----+-----------+----------+\n",
+            "|City_Id|Fact_id|Locality_Id|Restaurant_Id|Cuisines_id|Average_Cost_for_two|Rating_id|Delivery_ID|Table_booking_Id|Votes|Price_range|      City|\n",
+            "+-------+-------+-----------+-------------+-----------+--------------------+---------+-----------+----------------+-----+-----------+----------+\n",
+            "|      9|      1|         48|           70|         10|                 200|        8|          2|               2|  360|          1|   Lucknow|\n",
+            "|     13|      2|         13|          121|         27|                 250|       16|          2|               2|  123|          1|     Surat|\n",
+            "|     13|      3|        132|          188|         10|                 250|       13|          2|               2| 1109|          1|     Surat|\n",
+            "|     11|      4|         43|           15|         27|                 300|        4|          2|               2|  335|          1|     Patna|\n",
+            "|      9|      5|          5|           79|         23|                 300|        7|          2|               2|  660|          1|   Lucknow|\n",
+            "|      5|      6|        127|            6|          8|                 300|       13|          2|               2|  147|          3|  Guwahati|\n",
+            "|      3|      7|         65|           71|         17|                 350|        5|          2|               2|   24|          1|   Chennai|\n",
+            "|      1|      8|         68|           59|         24|                 400|       17|          1|               2|  488|          1| Bangalore|\n",
+            "|      9|      9|         48|          186|          6|                 400|       18|          2|               2|  365|          2|   Lucknow|\n",
+            "|      9|     10|         50|           55|         23|                 400|       15|          2|               2|  220|          2|   Lucknow|\n",
+            "|      9|     11|         50|          185|          6|                 400|       18|          2|               2|  347|          2|   Lucknow|\n",
+            "|      5|     12|        127|            1|          6|                 400|       18|          2|               2|   51|          1|  Guwahati|\n",
+            "|     11|     13|         63|          147|          8|                 450|       13|          2|               2|   38|          2|     Patna|\n",
+            "|      3|     14|         49|          223|          6|                 450|       19|          1|               2|   29|          1|   Chennai|\n",
+            "|      9|     15|         48|           82|          6|                 450|       12|          2|               2|  422|          2|   Lucknow|\n",
+            "|      9|     16|         48|           69|          6|                 450|       17|          2|               2|  487|          2|   Lucknow|\n",
+            "|      2|     17|        113|          168|         12|                 450|       16|          1|               2|    9|          1|Chandigarh|\n",
+            "|     11|     18|          6|           73|          1|                 500|       11|          2|               2|  213|          2|     Patna|\n",
+            "|     11|     19|         45|           90|         12|                 500|        2|          2|               2|  355|          2|     Patna|\n",
+            "|     11|     20|         45|          109|         12|                 500|        4|          2|               2|  287|          2|     Patna|\n",
+            "+-------+-------+-----------+-------------+-----------+--------------------+---------+-----------+----------------+-----+-----------+----------+\n",
+            "only showing top 20 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "joined_city_df.show()"
+      ],
+      "id": "oipJ-IChchqp"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 70,
+      "metadata": {
+        "id": "0cff24de",
+        "scrolled": false,
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "1abf7b7b-5306-4f3b-e743-fc021552200e"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+----------+-----+\n",
+            "|      City|count|\n",
+            "+----------+-----+\n",
+            "| Bangalore|   20|\n",
+            "|     Patna|   20|\n",
+            "|   Chennai|   20|\n",
+            "|   Lucknow|   21|\n",
+            "|    Mumbai|   20|\n",
+            "|       Goa|   20|\n",
+            "|   Kolkata|   20|\n",
+            "|     Surat|   20|\n",
+            "|      Pune|   20|\n",
+            "|Chandigarh|   18|\n",
+            "| Hyderabad|   18|\n",
+            "|  Guwahati|   21|\n",
+            "|    Jaipur|   20|\n",
+            "+----------+-----+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "restaurant_count=joined_city_df.groupBy(\"City\").count()\n",
+        "restaurant_count.show()"
+      ],
+      "id": "0cff24de"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "18db85ee"
+      },
+      "source": [
+        "## City-wise Top 10 restaurant based on Avg cost for 2"
+      ],
+      "id": "18db85ee"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "361ae527"
+      },
+      "outputs": [],
+      "source": [
+        "from pyspark.sql.functions import col"
+      ],
+      "id": "361ae527"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "11wog3ouc79y"
+      },
+      "outputs": [],
+      "source": [
+        "joined_city_df=Fact_Swiggy.join(city_dm_Table, ['City_Id'])\n",
+        "joined_restaurant_df=joined_city_df.join(restaurant_Dim_Table, ['Restaurant_Id'])\n",
+        "joined_restaurant_df.show()"
+      ],
+      "id": "11wog3ouc79y"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "cda2491a"
+      },
+      "outputs": [],
+      "source": [
+        "window = Window.partitionBy(joined_restaurant_df['City']).orderBy(joined_restaurant_df['Average_Cost_for_two'].desc())"
+      ],
+      "id": "cda2491a"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "1857d7c9"
+      },
+      "outputs": [],
+      "source": [
+        "City_wise_Top_10_restaurant = joined_restaurant_df.withColumn('row_no',row_number().over(window)).filter(col('row_no')<=10).select('City','Restaurant_Name','Average_Cost_for_two')"
+      ],
+      "id": "1857d7c9"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "eaa43af3",
+        "scrolled": true
+      },
+      "outputs": [],
+      "source": [
+        "City_wise_Top_10_restaurant.show(truncate=False)"
+      ],
+      "id": "eaa43af3"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "c07179ba"
+      },
+      "source": [
+        "## Top 10 restaurant based on Avg Votes"
+      ],
+      "id": "c07179ba"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "-qnXzt3HeGBW"
+      },
+      "outputs": [],
+      "source": [
+        "joined_city_df=Fact_Swiggy.join(city_dm_Table, ['City_Id'])\n",
+        "joined_restaurant_df=joined_city_df.join(restaurant_Dim_Table, ['Restaurant_Id'])\n",
+        "joined_restaurant_df.show()"
+      ],
+      "id": "-qnXzt3HeGBW"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "149a4fb3"
+      },
+      "outputs": [],
+      "source": [
+        "window = Window.partitionBy(joined_restaurant_df['City']).orderBy(joined_restaurant_df['Votes'].desc())"
+      ],
+      "id": "149a4fb3"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "46ae9730"
+      },
+      "outputs": [],
+      "source": [
+        "Top_10_restaurant_Avg  =joined_restaurant_df.withColumn(\"row\",row_number().over(window)).filter(col(\"row\") <= 10)"
+      ],
+      "id": "46ae9730"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "3f5eb2f2"
+      },
+      "outputs": [],
+      "source": [
+        "Top_10_restaurant_Avg= Top_10_restaurant_Avg.select(['City','Restaurant_Name','Votes'])"
+      ],
+      "id": "3f5eb2f2"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "e4d40ad4"
+      },
+      "outputs": [],
+      "source": [
+        "Top_10_restaurant_Avg.show(truncate=False)"
+      ],
+      "id": "e4d40ad4"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "5c383d0f"
+      },
+      "source": [
+        "## Top 10 restaurant based on Rating City wise"
+      ],
+      "id": "5c383d0f"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "9Mtm-IzxemPA"
+      },
+      "outputs": [],
+      "source": [
+        "joined_city_df=Fact_Swiggy.join(city_dm_Table, ['City_Id'])\n",
+        "joined_restaurant_df=joined_city_df.join(restaurant_Dim_Table, ['Restaurant_Id'])\n",
+        "joined_rating_df=joined_restaurant_df.join(Rating_dm_table, ['Rating_id'])\n",
+        "joined_rating_df.show()"
+      ],
+      "id": "9Mtm-IzxemPA"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "9eb1caaf"
+      },
+      "outputs": [],
+      "source": [
+        "window = Window.partitionBy(joined_rating_df['City']).orderBy(joined_rating_df['_Rating_Stars_out_of_5'].desc())"
+      ],
+      "id": "9eb1caaf"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "d84b0864"
+      },
+      "outputs": [],
+      "source": [
+        "Top_10_restaurant_Rating =joined_rating_df.withColumn(\"row\",row_number().over(window)).filter(col(\"row\") <= 10).select(['City','Restaurant_Name','_Rating_Stars_out_of_5'])"
+      ],
+      "id": "d84b0864"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "7bcec6bc"
+      },
+      "outputs": [],
+      "source": [
+        "Top_10_restaurant_Rating.show(truncate=False)"
+      ],
+      "id": "7bcec6bc"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "d3fa31a5"
+      },
+      "source": [
+        "## Rating based on delivery availability City wise"
+      ],
+      "id": "d3fa31a5"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "FK6x2G-Sfpen"
+      },
+      "outputs": [],
+      "source": [
+        "Delivery_Available_dm_table=Delivery_Available_col.withColumn('Delivery_ID',row_number().over(wind))"
+      ],
+      "id": "FK6x2G-Sfpen"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "gYNvBTYZfKFo"
+      },
+      "outputs": [],
+      "source": [
+        "joined_city_df=Fact_Swiggy.join(city_dm_Table, ['City_Id'])\n",
+        "joined_rating_df=joined_city_df.join(Rating_dm_table, ['Rating_id'])\n",
+        "joined_delivery_df=joined_rating_df.join(Delivery_Available_dm_table, ['Delivery_ID'])\n",
+        "joined_delivery_df.show()"
+      ],
+      "id": "gYNvBTYZfKFo"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "051b719f"
+      },
+      "outputs": [],
+      "source": [
+        "column_list = [\"City\",\"Has_Online_delivery\"]\n",
+        "win_spec = Window.partitionBy(*column_list).orderBy(col(\"_Rating_Stars_out_of_5\").desc())"
+      ],
+      "id": "051b719f"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "a501a263"
+      },
+      "outputs": [],
+      "source": [
+        "availability_City_wise=joined_delivery_df.withColumn(\"row\",row_number().over(win_spec)).filter(col(\"row\") <= 1).select(['City','Has_Online_delivery','_Rating_Stars_out_of_5'])"
+      ],
+      "id": "a501a263"
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "684064d9",
+        "scrolled": true
+      },
+      "outputs": [],
+      "source": [
+        "availability_City_wise.show()"
+      ],
+      "id": "684064d9"
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "spark.stop()"
+      ],
+      "metadata": {
+        "id": "RvukWseWxGmL"
+      },
+      "id": "RvukWseWxGmL",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "xGFK9Y8v0hc4"
+      },
+      "source": [
+        "##END"
+      ],
+      "id": "xGFK9Y8v0hc4"
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "display_name": "Python 3 (ipykernel)",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.9.7"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}

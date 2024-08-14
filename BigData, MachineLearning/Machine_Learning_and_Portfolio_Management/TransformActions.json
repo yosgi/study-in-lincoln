@@ -1,0 +1,565 @@
+{
+    "nbformat": 4,
+    "nbformat_minor": 0,
+    "metadata": {
+      "colab": {
+        "provenance": []
+      },
+      "kernelspec": {
+        "name": "python3",
+        "display_name": "Python 3"
+      },
+      "language_info": {
+        "name": "python"
+      }
+    },
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "WZdCWj0J-h37"
+        },
+        "source": [
+          "## Summarize data in PySpark"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "uxgd2dUX84JY"
+        },
+        "source": [
+          "## Contents\n",
+          "- Operations (Transformations and Actions)\n",
+          "  - Commonly used actions:\n",
+          "    - show: To show the dataframe output\n",
+          "    - collect: Run action command to compute and get the result\n",
+          "    - count: Count the numbers of rows\n",
+          "  - Commonly used transformations & functions:\n",
+          "    - distinct: Get unique values in a column\n",
+          "    - withColumn: Create new columns\n",
+          "      - Use popular functions like lit, when, etc.\n",
+          "    - withColumnRenamed: Rename column names\n",
+          "    - filter: Filter data using rules\n",
+          "    - groupby: Group and aggregate data by a column"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "### Install packages"
+        ],
+        "metadata": {
+          "id": "WSsnki4rKe8w"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "!pip install pyspark"
+        ],
+        "metadata": {
+          "id": "1lsUxGCkq_Ee"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "!pip install pyarrow\n",
+          "!pip install -q findspark"
+        ],
+        "metadata": {
+          "id": "tcNpO0jdyvHo"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "9tdA-RWoozaM"
+        },
+        "source": [
+          "### Initialize SparkSession"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "VecXeDgQRfgw"
+        },
+        "source": [
+          "from pyspark.sql import SparkSession\n",
+          "\n",
+          "spark = SparkSession.builder \\\n",
+          "        .master(\"local\") \\\n",
+          "        .appName(\"FIN612-PySpark on Google Colab\") \\\n",
+          "        .getOrCreate()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "HyNSC9w52GXz"
+        },
+        "source": [
+          "spark"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "TRxP4ge6Vsw_"
+        },
+        "source": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "FkxPdO75nLrH"
+        },
+        "source": [
+          "### Read data\n",
+          "Dataset (In-vehicle coupon recommendation): https://archive.ics.uci.edu/ml/machine-learning-databases/00603/in-vehicle-coupon-recommendation.csv"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "bLhz2C8EiP5o"
+        },
+        "source": [
+          "!wget -q https://archive.ics.uci.edu/ml/machine-learning-databases/00603/in-vehicle-coupon-recommendation.csv -P sample_data/"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "Co-iMsc8V_H-"
+        },
+        "source": [
+          "# We can set header='true' and inferSchema='true' to infer the schema while reading the data\n",
+          "\n",
+          "filepath = \"sample_data/in-vehicle-coupon-recommendation.csv\"\n",
+          "spark_df = spark.read.format('csv').options(header='true', inferSchema='true').load(filepath)\n",
+          "spark_df.show(5, truncate=False)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "67dhT84UQhli"
+        },
+        "source": [
+          "## Transformations and Actions"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "SYl9OrelQqlR"
+        },
+        "source": [
+          "from pyspark.sql import functions as F"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "aDhB1fmOQKYV"
+        },
+        "source": [
+          "## Actions"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "jfdvsKZ0QFR5"
+        },
+        "source": [
+          "### show"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "2NuaK3xx9KSv"
+        },
+        "source": [
+          "columns_to_use = [\"destination\", \"passanger\", \"weather\", \"temperature\", \"time\", \"coupon\", \"gender\", \"age\", \"has_children\", \"income\", \"Y\"]\n",
+          "spark_df = spark_df.select(*columns_to_use)\n",
+          "spark_df.show(5, truncate=False)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "_0G8ANLy9i6t"
+        },
+        "source": [
+          "### count: count the number of rows in a dataframe"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "qYRK5CoZ6-aF"
+        },
+        "source": [
+          "spark_df.count(), len(spark_df.columns)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "yaW2VTqN90nF"
+        },
+        "source": [
+          "### collect: Run action command to compute and get the result"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "sk9Pit6hOUoO"
+        },
+        "source": [
+          "spark_df.agg(F.min(\"temperature\"))"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "_5FRZl0KPreU"
+        },
+        "source": [
+          "spark_df.agg(F.min(\"temperature\")).show()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "BevDegg5PwN_"
+        },
+        "source": [
+          "spark_df.agg(F.min(\"temperature\")).collect()[0][0]"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "GwSYRCBtP4wg"
+        },
+        "source": [
+          "spark_df.collect()[:5]"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "2JDsaah8QOB1"
+        },
+        "source": [
+          "## Transformations"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "AM81v9FFR2Hl"
+        },
+        "source": [
+          "spark_df.show(5, truncate=False)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "gsq_ckfqQ7bl"
+        },
+        "source": [
+          "### distinct: Get unique values in a columns"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "OgKMCRhTOUiF"
+        },
+        "source": [
+          "spark_df.select(\"gender\").distinct().show()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "h2vhxiN4QYD5"
+        },
+        "source": [
+          "spark_df.select(\"passanger\").distinct().show()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "L85duhC0SWxX"
+        },
+        "source": [
+          "spark_df.show(5, truncate=False)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "PknescnZSNFV"
+        },
+        "source": [
+          "### withColumn: Create new columns & withColumnRenamed\n",
+          "Use popular functions like lit, when, etc."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "R7MhainrQXmS"
+        },
+        "source": [
+          "updated_spark_df = spark_df.withColumn(\"constant_column\", F.lit(\"full_data\"))\n",
+          "updated_spark_df.show(3, truncate=False)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "SODpphC1QXi6"
+        },
+        "source": [
+          "updated_spark_df = updated_spark_df.withColumn(\"gender_mapped\", F.when(F.col(\"gender\") == \"Female\", 0)\\\n",
+          "                                                                  .when(F.col(\"gender\") == \"Male\", 1)\\\n",
+          "                                                                  .otherwise(2))\n",
+          "updated_spark_df.sample(0.2).show(5, truncate=False)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "1_rpFDGoSYC2"
+        },
+        "source": [
+          "updated_spark_df = updated_spark_df.withColumnRenamed(\"passanger\", \"passenger\")\n",
+          "updated_spark_df.show(5, truncate=False)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "R92Q44qdcY-m"
+        },
+        "source": [
+          "updated_spark_df = updated_spark_df.withColumnRenamed(\"constant_column\", \"const_col\")\n",
+          "updated_spark_df.show(5, truncate=False)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "N2avNGquUag9"
+        },
+        "source": [
+          "### filter: Filter data"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "JY5jlV4QUhmr"
+        },
+        "source": [
+          "updated_spark_df.select(\"temperature\").distinct().show()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "wYwNo5sSUdA7"
+        },
+        "source": [
+          "temp_80_df = updated_spark_df.filter(F.col(\"temperature\") == 80)\n",
+          "temp_80_df.show(3)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "tD8Y7A9LSX_C"
+        },
+        "source": [
+          "updated_spark_df.count(), temp_80_df.count()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "96gZplL7U_Gz"
+        },
+        "source": [
+          "temp_45_90_df = updated_spark_df.filter((F.col(\"temperature\") > 45) & (F.col(\"temperature\") < 90))\n",
+          "temp_45_90_df.show(3)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "uP8BGlhEU_DZ"
+        },
+        "source": [
+          "updated_spark_df.count(), temp_45_90_df.count()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "hWPvRdyBVgTt"
+        },
+        "source": [
+          "### groupby and aggregate"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "hDnOaDXpVPBU"
+        },
+        "source": [
+          "spark_df.show(3, truncate=False)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "5dbx5e4SVp_K"
+        },
+        "source": [
+          "spark_df.groupby(\"gender\").count().show()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "wjEZNmCyVxSH"
+        },
+        "source": [
+          "spark_df.groupby(\"temperature\").count().show()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "IYQThMIVU8VN"
+        },
+        "source": [
+          "spark_df.groupby(\"gender\").agg(F.min(\"temperature\"), F.max(\"temperature\")).show()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "1l-U0v59WFWx"
+        },
+        "source": [
+          "spark_df.groupby(\"gender\").agg(F.min(\"temperature\").alias(\"min_temperature\"), F.max(\"temperature\").alias(\"max_temperature\")).show()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "spark.stop()"
+        ],
+        "metadata": {
+          "id": "T8NO3pNbjhIc"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "D4ck1DNB4HBL"
+        },
+        "source": [
+          "## Summary\n",
+          "- We have seen popular and basic transformations and action commands"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##End"
+        ],
+        "metadata": {
+          "id": "J1RSyDBOORgp"
+        }
+      }
+    ]
+  }

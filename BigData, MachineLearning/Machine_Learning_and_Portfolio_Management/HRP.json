@@ -1,0 +1,215 @@
+{
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "id": "consolidated-vault",
+        "metadata": {
+          "id": "consolidated-vault"
+        },
+        "source": [
+          "# Hierarchical Risk Parity\n",
+          "\n",
+          "HRP is a modern portfolio optimization method inspired by machine learning.\n",
+          "\n",
+          "The idea is that by examining the hierarchical structure of the market, we can better diversify.\n",
+          "\n",
+          "1- Downloading data for HRP <br>\n",
+          "2- Using HRP to find the minimum variance portfolio <br>\n",
+          "3- Plotting dendrograms <br>\n",
+          "\n",
+          "HRP steps:<br>\n",
+          "1-From a universe of assets, form a distance matrix based on the correlation of the assets.<br>\n",
+          "2-Using this distance matrix, cluster the assets into a tree via hierarchical clustering.<br>\n",
+          "3-Within each branch of the tree, form the minimum variance portfolio (normally between just two assets).<br>\n",
+          "4-Iterate over each level, optimally combining the mini-portfolios at each node."
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "id": "saving-safety",
+        "metadata": {
+          "id": "saving-safety"
+        },
+        "source": [
+          "##1- Downloading data\n",
+          "\n",
+          "HRP only requires historical returns"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "!pip install pandas numpy matplotlib yfinance PyPortfolioOpt\n",
+          "import os\n"
+        ],
+        "metadata": {
+          "id": "kvgN-hAEBYHZ"
+        },
+        "id": "kvgN-hAEBYHZ",
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "id": "committed-riverside",
+        "metadata": {
+          "id": "committed-riverside"
+        },
+        "outputs": [],
+        "source": [
+          "import numpy as np\n",
+          "import pandas as pd\n",
+          "import matplotlib.pyplot as plt\n",
+          "import yfinance as yf\n",
+          "import pypfopt\n",
+          "\n",
+          "pypfopt.__version__"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "id": "accredited-enterprise",
+        "metadata": {
+          "id": "accredited-enterprise"
+        },
+        "outputs": [],
+        "source": [
+          "tickers = [\"BLK\"]#?\n",
+          "\n",
+          "ohlc = yf.download(tickers, period=\"max\")\n",
+          "prices = ohlc[\"Adj Close\"]\n",
+          "prices.tail()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "id": "confident-plant",
+        "metadata": {
+          "id": "confident-plant"
+        },
+        "outputs": [],
+        "source": [
+          "from pypfopt import expected_returns\n",
+          "\n",
+          "rets = expected_returns.returns_from_prices(prices)\n",
+          "rets.tail()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "id": "answering-tamil",
+        "metadata": {
+          "id": "answering-tamil"
+        },
+        "source": [
+          "##2- HRP optimization\n",
+          "\n",
+          "HRP uses a completely different backend, so it is currently not possible to pass constraints or specify an objective function."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "id": "crazy-minority",
+        "metadata": {
+          "id": "crazy-minority"
+        },
+        "outputs": [],
+        "source": [
+          "from pypfopt import HRPOpt"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "id": "determined-license",
+        "metadata": {
+          "id": "determined-license"
+        },
+        "outputs": [],
+        "source": [
+          "hrp = HRPOpt(rets)\n",
+          "hrp.optimize()\n",
+          "weights = hrp.clean_weights()\n",
+          "weights"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "id": "existing-memphis",
+        "metadata": {
+          "id": "existing-memphis"
+        },
+        "outputs": [],
+        "source": [
+          "pd.Series(weights).plot.pie(figsize=(10, 10));"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "id": "dramatic-spyware",
+        "metadata": {
+          "id": "dramatic-spyware"
+        },
+        "outputs": [],
+        "source": [
+          "hrp.portfolio_performance(verbose=True);"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "id": "occupational-costume",
+        "metadata": {
+          "id": "occupational-costume"
+        },
+        "source": [
+          "##3- Plotting\n",
+          "\n",
+          "It is very simple to plot a dendrogram (tree diagram) based on the hierarchical structure of asset returns"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "id": "upset-meaning",
+        "metadata": {
+          "id": "upset-meaning"
+        },
+        "outputs": [],
+        "source": [
+          "from pypfopt import plotting\n",
+          "\n",
+          "plotting.plot_dendrogram(hrp);"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#END"
+        ],
+        "metadata": {
+          "id": "Gl4nCEmH01FK"
+        },
+        "id": "Gl4nCEmH01FK"
+      }
+    ],
+    "metadata": {
+      "kernelspec": {
+        "display_name": "Python 3",
+        "name": "python3"
+      },
+      "language_info": {
+        "name": "python"
+      },
+      "colab": {
+        "provenance": []
+      }
+    },
+    "nbformat": 4,
+    "nbformat_minor": 5
+  }
