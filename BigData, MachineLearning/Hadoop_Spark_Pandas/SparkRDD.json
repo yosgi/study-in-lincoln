@@ -1,0 +1,981 @@
+{
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "a-5AKYNZpu4k"
+        },
+        "source": [
+          "# ***Running Pyspark in Colab***"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "Dd6t0uFzuR4X"
+        },
+        "source": [
+          "## PySpark in Colab - FINC612\n",
+          "1- Install packages <br>\n",
+          "2- Spark session <br>\n",
+          "3- RDD in Spark"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###1- Install packages"
+        ],
+        "metadata": {
+          "id": "WSsnki4rKe8w"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "Python API"
+        ],
+        "metadata": {
+          "id": "A6ps3bKdIAgn"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "!pip install pyspark"
+        ],
+        "metadata": {
+          "id": "1lsUxGCkq_Ee"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "#!pip install pyarrow\n",
+          "#!pip install -q findspark"
+        ],
+        "metadata": {
+          "id": "tcNpO0jdyvHo"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "9tdA-RWoozaM"
+        },
+        "source": [
+          "###2- Initialize SparkSession"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "VecXeDgQRfgw"
+        },
+        "source": [
+          "from pyspark.sql import SparkSession\n",
+          "\n",
+          "spark = SparkSession.builder \\\n",
+          "        .master(\"local\") \\\n",
+          "        .appName(\"F612-RDD on Google Colab\") \\\n",
+          "        .getOrCreate()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "H3-5mGZVq8Dv"
+        },
+        "outputs": [],
+        "source": [
+          "spark"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "etboL5wf1Rl-"
+        },
+        "source": [
+          "##3- RDD in Spark:\n",
+          "There are three ways to create an RDD in Spark."
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "LpviosJW1ZmJ"
+        },
+        "source": [
+          "* Parallelizing already existing collection in driver program.\n",
+          "* Referencing a dataset in an external storage system (e.g. HDFS, Hbase, shared file system).\n",
+          "* Creating RDD from already existing RDDs."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "cXocHsVd3DF2"
+        },
+        "outputs": [],
+        "source": [
+          "sc = spark.sparkContext\n",
+          "sc"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "4SH8ka4j1dvB"
+        },
+        "outputs": [],
+        "source": [
+          "data_range = range(1,101)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "fH4KMttn2uYm"
+        },
+        "outputs": [],
+        "source": [
+          "type(data_range)"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "Create RDD"
+        ],
+        "metadata": {
+          "id": "g44_Sdg9pYDY"
+        }
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "cdrspDE32v3j"
+        },
+        "outputs": [],
+        "source": [
+          "data_RDD = sc.parallelize(data_range,10)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "6l2b6E3W24qH"
+        },
+        "outputs": [],
+        "source": [
+          "data_RDD.take(5)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "O4qGWibf3JHz"
+        },
+        "outputs": [],
+        "source": [
+          "data_RDD.getNumPartitions()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "g5e0KRJs3Zkb"
+        },
+        "outputs": [],
+        "source": [
+          "data_pair = [(\"maths\",52),(\"english\",75),(\"science\",82), (\"computer\",65),(\"maths\",85)]"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "_kewysSb3hsR"
+        },
+        "outputs": [],
+        "source": [
+          "type(data_pair)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "nivGmWJv3kxM"
+        },
+        "outputs": [],
+        "source": [
+          "rdd1 = sc.parallelize(data_pair)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "khyl59o-3mz7"
+        },
+        "outputs": [],
+        "source": [
+          "rdd1.collect()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "Y_tVi1wrKLaG"
+        },
+        "source": [
+          "## RDDs support two types of operations:"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "tiBJTjbiKOew"
+        },
+        "source": [
+          "* Transformations are operations (such as map, filter, join, union, and so on) that are performed on an RDD and which yield a new RDD containing the result\n",
+          "* Actions are operations (such as reduce, count, first, and so on) that return a value after running a computation on an RDD\n",
+          "* Transformations in Spark are “lazy”, meaning that they do not compute their results right away\n",
+          "* They just “remember” the operation to be performed and the dataset (e.g., file) to which the operation is to be performed.\n",
+          "* The transformations are only actually computed when an action is called and the result is returned to the driver program.\n",
+          "* This design enables Spark to run more efficiently. For example, if a big file was transformed in various ways and passed to first action, Spark would only process and return the result for the first line, rather than do the work for the entire file."
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "vHAzSaoFKdPK"
+        },
+        "source": [
+          "## Transformations"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "0wYcCx92KiSA"
+        },
+        "source": [
+          "* coalesce() - Return a new RDD that is reduced into numPartitions partitions.\n",
+          "* glom() - Return an RDD created by coalescing all elements within each partition into an array"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "jCGpcE0LKqV4"
+        },
+        "outputs": [],
+        "source": [
+          "RDD = sc.parallelize(range(30), 5)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "GR41X4M0Kuyk"
+        },
+        "outputs": [],
+        "source": [
+          "RDD.glom().collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "3OAGGys4Kwtu"
+        },
+        "outputs": [],
+        "source": [
+          "RDD.getNumPartitions()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "LvxjatF0K1u7"
+        },
+        "outputs": [],
+        "source": [
+          "RDD = RDD.coalesce(2)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "TqP8Jv1aK3FA"
+        },
+        "outputs": [],
+        "source": [
+          "RDD.glom().collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "SMwX_YtgK5AM"
+        },
+        "outputs": [],
+        "source": [
+          "RDD_par = RDD.repartition(20)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "7vgluD4FLGGa"
+        },
+        "outputs": [],
+        "source": [
+          "RDD_par.glom().collect()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "sU5aepejLMOH"
+        },
+        "source": [
+          "* Note : Internally, repartition uses a shuffle to redistribute data. If you are decreasing the number of partitions in this RDD, consider using coalesce, which can avoid performing a shuffle."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "ONeHQ9BNLOaV"
+        },
+        "outputs": [],
+        "source": [
+          "intRdd = sc.parallelize([10, 20, 30, 40, 50])"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "do3OzrRwMLQz"
+        },
+        "source": [
+          "* Map Transformation"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "HD1vqkXyMC7R"
+        },
+        "outputs": [],
+        "source": [
+          "mapRDD = intRdd.map(lambda x : x**2)\n",
+          "mapRDD.collect()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "pf_WW1U_MOMm"
+        },
+        "source": [
+          "* Filter(Transformation):\n",
+          "\n",
+          "* The filter operation evaluates a Boolean function for each data item of the RDD and puts the items for which the function returned true into the resulting RDD. Filter is a Transformation. Collect is an Action.\n",
+          "\n",
+          "(A boolean function is a function that returns a boolean value, which is either True or False. Boolean functions are often used in programming for conditional statements, filtering data, and other tasks that require a decision to be made based on a certain condition.)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "_zBghnfkMTTx"
+        },
+        "outputs": [],
+        "source": [
+          "numRdd = sc.parallelize([11,12,13,14,15,16,17,18])\n",
+          "filterRdd1 = numRdd.filter(lambda x : x%2 == 1)#odd\n",
+          "filterRdd1.collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "_s1PMnTzMW5B"
+        },
+        "outputs": [],
+        "source": [
+          "filterRdd2 = numRdd.filter(lambda x : x%2 == 0)\n",
+          "filterRdd2.collect()\n"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "hoD554yxMioL"
+        },
+        "source": [
+          "* ReduceByKey (Transformation):\n",
+          "* Spark RDD reduceByKey function merges the values for each key using an associative reduce function. Basically reduceByKey function works only for RDDs which contains key and value pairs kind of elements (i.e. RDDs having tuple or Map as a data element)."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "TsxA_k6zMkhe"
+        },
+        "outputs": [],
+        "source": [
+          "x = sc.parallelize([(\"comp\", 2), (\"tab\", 1), (\"comp\", 1), (\"comp\", 1),\n",
+          "(\"tab\", 1), (\"tab\", 1), (\"tab\", 1), (\"tab\", 1)])"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "swDCPJUoMnZu"
+        },
+        "outputs": [],
+        "source": [
+          "x.collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "Kt2tgqiAMtmx"
+        },
+        "outputs": [],
+        "source": [
+          "x.reduceByKey(lambda a, b: a + b).collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "UT0E5FB6Mx9r"
+        },
+        "outputs": [],
+        "source": [
+          "y = x.reduceByKey(lambda a, b: a + b)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "hx5wyyNaMz6L"
+        },
+        "outputs": [],
+        "source": [
+          "y.collect()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "ox1xnTWRM5D_"
+        },
+        "source": [
+          "* flatMap (Transformation) : is used to transform from one record to multiple records.\n",
+          "* Spark flatMap function returns a new RDD by first applying a function to all elements of this RDD, and then flattening the results."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "Y6yycOVdM8D2"
+        },
+        "outputs": [],
+        "source": [
+          "sc.parallelize([3,4,5]).map(lambda x: range(1,x)).collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "X82AbBTZNAYD"
+        },
+        "outputs": [],
+        "source": [
+          "sc.parallelize([3,4,5]).flatMap(lambda x: range(1,x)).collect()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#Text Input"
+        ],
+        "metadata": {
+          "id": "9K2mZS3ut0aJ"
+        }
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "p8j-AC6wNCNL"
+        },
+        "outputs": [],
+        "source": [
+          "sentRdd = sc.parallelize([\"Hello TO BE a student in FINCE 604 at Lincoln University\", \"Welcome to Data Training.\", \"We are doing pySpark Activity\"])"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "gJTVX5_aNErV"
+        },
+        "outputs": [],
+        "source": [
+          "sentRdd.collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "AAbYryOJNGO1"
+        },
+        "outputs": [],
+        "source": [
+          "sentRdd.map(lambda x: x.split(' ')).collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "5HSQjPB-NKw-"
+        },
+        "outputs": [],
+        "source": [
+          "wordlist = sentRdd.flatMap(lambda x: x.split(' ')).collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "PVeoXU9PNM7z"
+        },
+        "outputs": [],
+        "source": [
+          "wordlist\n"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "racJIFvTNSoE"
+        },
+        "source": [
+          "* groupByKey(Transformation):\n",
+          "* Spark groupByKey function returns a new RDD. The returned RDD gives back an object which allows to iterate over the results. The results of groupByKey returns a list by calling list() on values."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "KSEZ74-vNUxM"
+        },
+        "outputs": [],
+        "source": [
+          "example = sc.parallelize([('x',1), ('x',1), ('y', 1), ('z', 1)])"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "PO5RPjJ4NXK6"
+        },
+        "outputs": [],
+        "source": [
+          "example.groupByKey().collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "dYF_WpCFNaE1"
+        },
+        "outputs": [],
+        "source": [
+          "itRdd = example.groupByKey()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "P1BoQgHTNeZQ"
+        },
+        "outputs": [],
+        "source": [
+          "itRdd.map(lambda x :(x[0], list(x[1]))).collect()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "jrZKlyUHNpHC"
+        },
+        "source": [
+          "* groupBy (Transformation) :\n",
+          "* groupBy function returns an RDD of grouped items. This operation will return the new RDD which basically is made up with a KEY (which is a group) and list of items of that group (in a form of Iterator). Order of element within the group may not same when you apply the same operation on the same RDD over and over."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "GeuBDkIxNrEi"
+        },
+        "outputs": [],
+        "source": [
+          "namesRdd = sc.parallelize([\"Joseph\", \"Jimmy\", \"Tina\",\"Thomas\",\"James\",\"Cory\",\"Christine\", \"Jackeline\", \"Juan\"])"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "PLcM1RsZNtjW"
+        },
+        "outputs": [],
+        "source": [
+          "namesRdd.collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "zOZTY17ENvHZ"
+        },
+        "outputs": [],
+        "source": [
+          "result =namesRdd.groupBy(lambda word: word[0]).collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "result"
+        ],
+        "metadata": {
+          "id": "ToIEPMunvHzI"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "Xtnhu-zsNydm"
+        },
+        "outputs": [],
+        "source": [
+          "for x in result:\n",
+          "    x = (x[0],sorted(x[1]))\n",
+          "    print(x)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "v_o8QAZrN0T6"
+        },
+        "outputs": [],
+        "source": [
+          "[(x, sorted(y)) for (x, y) in result]"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "I7IxJ4CcN8uq"
+        },
+        "source": [
+          "* mapValues (Transformation) :\n",
+          "* Apply a function to each value of a pair RDD without changing the key."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "PTad-EZCPm_J"
+        },
+        "outputs": [],
+        "source": [
+          "namesRdd = sc.parallelize([\"dog\", \"tiger\", \"lion\", \"cat\", \"panther\",\"eagle\"])\n",
+          "pairRdd = namesRdd.map(lambda x :(len(x), x))"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "32X3A8xQP20W"
+        },
+        "outputs": [],
+        "source": [
+          "namesRdd.collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "F1OMNaWaP5uh"
+        },
+        "outputs": [],
+        "source": [
+          "pairRdd.collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "wL4sGjGzP7SF"
+        },
+        "outputs": [],
+        "source": [
+          "result = pairRdd.mapValues(lambda y: \"Animal name is \" + y)\n",
+          "result.collect()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "* Join"
+        ],
+        "metadata": {
+          "id": "6u6wdMTowMjs"
+        }
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "8kkBfCYxP-Ps"
+        },
+        "outputs": [],
+        "source": [
+          "rdd1 = sc.parallelize([(\"red\",20),(\"red\",30),(\"blue\", 100)])\n",
+          "rdd2 = sc.parallelize([(\"red\",40),(\"red\",50),(\"yellow\", 10000)])"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "QweD3GmlQMu_"
+        },
+        "outputs": [],
+        "source": [
+          "rdd1.join(rdd2).collect() #This is where the join operation happens. It combines rdd1 and rdd2 based on their common keys."
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "BqHZIsGFQOO5"
+        },
+        "outputs": [],
+        "source": [
+          "rdd1 = sc.parallelize([(\"Mercedes\", \"E-Class\"), (\"Toyota\", \"Corolla\"),(\"Renault\", \"Duster\")]) #Right\n",
+          "rdd2 = sc.parallelize([(\"Mercedes\", \"C-Class\"), (\"Toyota\", \"Prius\"),(\"Toyota\", \"Etios\"),(\"Volkswagen\", \"Polo\")])"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "8Bko9-sdQRgf"
+        },
+        "outputs": [],
+        "source": [
+          "innerJoinRdd = rdd1.join(rdd2)\n",
+          "innerJoinRdd.collect()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "Ref:Spark- https://spark.apache.org/docs/3.1.1/api/python/reference/api/pyspark.RDD.leftOuterJoin.html"
+        ],
+        "metadata": {
+          "id": "YhkOqj8ucvZb"
+        }
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "dlHFM5UrQTTx"
+        },
+        "outputs": [],
+        "source": [
+          "outerJoinRdd = rdd1.leftOuterJoin(rdd2)\n",
+          "outerJoinRdd.collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "FJ-tVhQjQhO1"
+        },
+        "outputs": [],
+        "source": [
+          "rdd1.rightOuterJoin(rdd2).collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "aVK-IvYjTBL2"
+        },
+        "outputs": [],
+        "source": [
+          "rdd1.fullOuterJoin(rdd2).collect()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "* Union()"
+        ],
+        "metadata": {
+          "id": "34tDiZ8px2gK"
+        }
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "SyoYC0EfTEPT"
+        },
+        "outputs": [],
+        "source": [
+          "d1= [('k1', 1), ('k2', 2), ('k3', 5)]\n",
+          "d2= [('k1', 3), ('k2',4), ('k4', 8)]\n"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "Jwby6pJzTISJ"
+        },
+        "outputs": [],
+        "source": [
+          "d1_RDD = sc.parallelize(d1)\n",
+          "d2_RDD = sc.parallelize(d2)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "H4ovoiabTKg3"
+        },
+        "outputs": [],
+        "source": [
+          "d1_RDD.union(d2_RDD).collect()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "_cwvaa5V9DYK"
+        },
+        "source": [
+          "spark.stop()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##END\n",
+          "\n",
+          "---\n",
+          "\n"
+        ],
+        "metadata": {
+          "id": "bA9Bf7sFHsx7"
+        }
+      }
+    ],
+    "metadata": {
+      "colab": {
+        "provenance": []
+      },
+      "kernelspec": {
+        "display_name": "Python 3",
+        "language": "python",
+        "name": "python3"
+      },
+      "language_info": {
+        "codemirror_mode": {
+          "name": "ipython",
+          "version": 3
+        },
+        "file_extension": ".py",
+        "mimetype": "text/x-python",
+        "name": "python",
+        "nbconvert_exporter": "python",
+        "pygments_lexer": "ipython3",
+        "version": "3.7.3"
+      }
+    },
+    "nbformat": 4,
+    "nbformat_minor": 0
+  }

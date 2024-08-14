@@ -1,0 +1,268 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Y_oe_H-ySmb7"
+      },
+      "source": [
+        "# **Create DataFrame in PySpark 3.0 on Google Colab**\n",
+        "1- Install packages <br>\n",
+        "2- Spark session <br>\n",
+        "3- Create DataFrame with differnt options"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "###1- Install packages"
+      ],
+      "metadata": {
+        "id": "WSsnki4rKe8w"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install pyspark"
+      ],
+      "metadata": {
+        "id": "1lsUxGCkq_Ee"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install pyarrow\n",
+        "!pip install -q findspark"
+      ],
+      "metadata": {
+        "id": "tcNpO0jdyvHo"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9tdA-RWoozaM"
+      },
+      "source": [
+        "###2- Initialize SparkSession"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "VecXeDgQRfgw"
+      },
+      "source": [
+        "from pyspark.sql import SparkSession\n",
+        "\n",
+        "spark = SparkSession.builder \\\n",
+        "        .master(\"local\") \\\n",
+        "        .appName(\"Create DataFrame PySpark 3.0\") \\\n",
+        "        .getOrCreate()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "HyNSC9w52GXz"
+      },
+      "source": [
+        "spark"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "###3-Create DataFrame with different Options"
+      ],
+      "metadata": {
+        "id": "YD0NZvNIxF_A"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "X7KYC6B_l2Pl"
+      },
+      "source": [
+        "# **Option 1**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "KTjAhGOil1es"
+      },
+      "source": [
+        "users_list_0 = [\"1|John|London\", \"2|Martin|New York\", \"3|Sam|Sydney\", \"4|Alan|Mexico City\", \"5|Jacob|Florida\"]\n",
+        "print(users_list_0)\n",
+        "\n",
+        "users_list_0_rdd = spark.sparkContext.parallelize(users_list_0)\n",
+        "\n",
+        "users_list_0_rdd = users_list_0_rdd.map(lambda ele: (int(ele.split('|')[0]), ele.split('|')[1], ele.split('|')[2]))\n",
+        "\n",
+        "users_df_0 = spark.createDataFrame(users_list_0_rdd)\n",
+        "users_df_0.show(10)\n",
+        "users_df_0.printSchema()\n",
+        "\n",
+        "from pyspark.sql.types import StructType, StructField, IntegerType, StringType\n",
+        "\n",
+        "users_schema = StructType([\n",
+        "                          StructField(\"id\", IntegerType(), True),\n",
+        "                          StructField(\"name\", StringType(), True),\n",
+        "                          StructField(\"city\", StringType(), True)])\n",
+        "\n",
+        "users_df_01 = spark.createDataFrame(users_list_0_rdd, schema=users_schema)\n",
+        "users_df_01.show(10)\n",
+        "users_df_01.printSchema()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "kJUCWgC6nub2"
+      },
+      "source": [
+        "# **Option 2**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "VL0FoL3GZsW5"
+      },
+      "source": [
+        "\n",
+        "users_list_1 = [(1, \"John\", \"London\"), (2, \"Martin\", \"New York\"), (3, \"Sam\", \"Sydney\"), (4, \"Alan\", \"Mexico City\"), (5, \"Jacob\", \"Florida\")]\n",
+        "print(users_list_1)\n",
+        "\n",
+        "users_df_1 = spark.createDataFrame(users_list_1)\n",
+        "users_df_1.show(10)\n",
+        "users_df_1.printSchema()\n",
+        "\n",
+        "from pyspark.sql.types import StructType, StructField, IntegerType, StringType\n",
+        "\n",
+        "users_schema = StructType([\n",
+        "                          StructField(\"id\", IntegerType(), True),\n",
+        "                          StructField(\"name\", StringType(), True),\n",
+        "                          StructField(\"city\", StringType(), True)])\n",
+        "\n",
+        "users_df_11 = spark.createDataFrame(users_list_1, schema=users_schema)\n",
+        "users_df_11.show(10)\n",
+        "users_df_11.printSchema()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PjacUzsGol64"
+      },
+      "source": [
+        "# **Option 3**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "lErHEshwoWSJ"
+      },
+      "source": [
+        "from pyspark.sql import Row\n",
+        "\n",
+        "users_list_2 = [Row(1, \"John\", \"London\"), Row(2, \"Martin\", \"New York\"), Row(3, \"Sam\", \"Sydney\"), Row(4, \"Alan\", \"Mexico City\"), Row(5, \"Jacob\", \"Florida\")]\n",
+        "print(users_list_2)\n",
+        "\n",
+        "users_df_2 = spark.createDataFrame(users_list_2)\n",
+        "users_df_2.show(10)\n",
+        "users_df_2.printSchema()\n",
+        "\n",
+        "users_df_21 = spark.createDataFrame(users_list_2, schema=users_schema)\n",
+        "users_df_21.show(10)\n",
+        "users_df_21.printSchema()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ZT-te695o-y1"
+      },
+      "source": [
+        "# **Option 4**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "9XKM4a4VpBrE"
+      },
+      "source": [
+        "users_list_3 = [{\"id\": 1, \"name\": \"John\", \"city\": \"London\"},\n",
+        "                {\"id\": 2, \"name\": \"Martin\", \"city\": \"New York\"},\n",
+        "                {\"id\": 3, \"name\": \"Sam\", \"city\": \"Sydney\"},\n",
+        "                {\"id\": 4, \"name\": \"Alan\", \"city\": \"Mexico City\"},\n",
+        "                {\"id\": 5, \"name\": \"Jacob\", \"city\": \"Florida\"}]\n",
+        "print(users_list_3)\n",
+        "\n",
+        "users_df_3 = spark.createDataFrame(users_list_3)\n",
+        "users_df_3.show(10)\n",
+        "users_df_3.printSchema()\n",
+        "\n",
+        "users_df_31 = spark.createDataFrame(users_list_3, schema=users_schema)\n",
+        "users_df_31.show(10)\n",
+        "users_df_31.printSchema()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vYS-27UopYi_"
+      },
+      "source": [
+        "spark.stop()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#END\n",
+        "\n",
+        "---\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "27BrHdUTwkoR"
+      }
+    }
+  ]
+}
