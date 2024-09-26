@@ -1,0 +1,658 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#Linear Regression - ML\n",
+        "https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html"
+      ],
+      "metadata": {
+        "id": "dJSRjUNWfgtB"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "##Install Packages"
+      ],
+      "metadata": {
+        "id": "bxHwGAkrbjsv"
+      }
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "d0hZgo75O9hb"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as seabornInstance\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.linear_model import LinearRegression\n",
+        "from sklearn import metrics\n",
+        "%matplotlib inline"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## Data"
+      ],
+      "metadata": {
+        "id": "MvOH5kPf1xzn"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ],
+      "metadata": {
+        "id": "1jaauEPDb0Vn"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import files"
+      ],
+      "metadata": {
+        "id": "WSeLM8QucISJ"
+      },
+      "execution_count": 5,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import io\n",
+        "uploaded = files.upload()\n",
+        "dataset = pd.read_csv(io.BytesIO(uploaded['weather.csv']))"
+      ],
+      "metadata": {
+        "id": "gXG3AjIjhEK4"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "dataset.shape"
+      ],
+      "metadata": {
+        "id": "HGrbNAjsPPsM"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "dataset.describe()"
+      ],
+      "metadata": {
+        "id": "J0WnLQAYPTPU"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "dataset.plot(x='MinTemp', y='MaxTemp', style='o')\n",
+        "plt.title('MinTemp vs MaxTemp')\n",
+        "plt.xlabel('MinTemp')\n",
+        "plt.ylabel('MaxTemp')\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "U_TZNs6WPZ-z"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "plt.figure(figsize=(15,10))\n",
+        "plt.tight_layout()\n",
+        "seabornInstance.distplot(dataset['MaxTemp'])"
+      ],
+      "metadata": {
+        "id": "FqdGexj1PlUL"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X = dataset['MinTemp'].values.reshape(-1,1)\n",
+        "y = dataset['MaxTemp'].values.reshape(-1,1)"
+      ],
+      "metadata": {
+        "id": "_f78OIOUPl1s"
+      },
+      "execution_count": 14,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)"
+      ],
+      "metadata": {
+        "id": "zsYsSofOQjls"
+      },
+      "execution_count": 59,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "##Linear Regression"
+      ],
+      "metadata": {
+        "id": "EsCF5QhzbHPD"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "regressor = LinearRegression()\n",
+        "regressor.fit(X_train, y_train) #training the algorithm"
+      ],
+      "metadata": {
+        "id": "rJp9khuOQpWL"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#To retrieve the intercept:\n",
+        "print(regressor.intercept_)\n",
+        "\n",
+        "#For retrieving the slope:\n",
+        "print(regressor.coef_)"
+      ],
+      "metadata": {
+        "id": "vbGCOuXpQsjF"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "y_pred = regressor.predict(X_test)"
+      ],
+      "metadata": {
+        "id": "mwJsMBEXQxA7"
+      },
+      "execution_count": 18,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "####Predict y using a certain value"
+      ],
+      "metadata": {
+        "id": "6svgmetgGAsG"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from array import array\n",
+        "x_new = np.array([25]).reshape(-1, 1)\n",
+        "y_new = regressor.predict(x_new)"
+      ],
+      "metadata": {
+        "id": "EcZl-cVsGBO1"
+      },
+      "execution_count": 19,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "y_new"
+      ],
+      "metadata": {
+        "id": "-MyWlVgya6Hk"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "####"
+      ],
+      "metadata": {
+        "id": "bq4-Fov5bF6H"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df = pd.DataFrame({'Actual': y_test.flatten(), 'Predicted': y_pred.flatten()})\n",
+        "df"
+      ],
+      "metadata": {
+        "id": "ewHaUfhnQ2ni"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df1 = df.head(25)\n",
+        "df1.plot(kind='bar',figsize=(16,10))\n",
+        "plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')\n",
+        "plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "hdjYNEfjQ9Rz"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "plt.scatter(X_test, y_test,  color='gray')\n",
+        "plt.plot(X_test, y_pred, color='red', linewidth=2)\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "fuz0GHP-Q_3N"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_pred))\n",
+        "print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))\n",
+        "print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred)))"
+      ],
+      "metadata": {
+        "id": "K0iW4XZiREt6"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "##Lasso Regression"
+      ],
+      "metadata": {
+        "id": "M5ysmc80ZF-J"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.linear_model import Lasso"
+      ],
+      "metadata": {
+        "id": "hFcd6kRuZGjx"
+      },
+      "execution_count": 25,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "regressor1 = Lasso()\n",
+        "regressor1.fit(X_train, y_train) #training the algorithm"
+      ],
+      "metadata": {
+        "id": "oG0y7P74ZNb0"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#To retrieve the intercept:\n",
+        "print(regressor1.intercept_)\n",
+        "\n",
+        "#For retrieving the slope:\n",
+        "print(regressor1.coef_)"
+      ],
+      "metadata": {
+        "id": "nh6zJKFGaOio"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "y_pred1 = regressor1.predict(X_test)"
+      ],
+      "metadata": {
+        "id": "IP_SLUe3aOip"
+      },
+      "execution_count": 28,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df1 = pd.DataFrame({'Actual': y_test.flatten(), 'Predicted': y_pred1.flatten()})\n",
+        "df1"
+      ],
+      "metadata": {
+        "id": "lID3FRkfaf5Z"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "plt.scatter(X_test, y_test,  color='gray')\n",
+        "plt.plot(X_test, y_pred1, color='red', linewidth=2)\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "ft4-2o5_af5a"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_pred1))\n",
+        "print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred1))\n",
+        "print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred1)))"
+      ],
+      "metadata": {
+        "id": "RAGO5mnyaxn0"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "##Multiple Regerssion"
+      ],
+      "metadata": {
+        "id": "3ykiAqjQcUTG"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "dataset = dataset.fillna(method='ffill')"
+      ],
+      "metadata": {
+        "id": "qdR6R-IHenNY"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X1 = dataset[['MinTemp', 'Sunshine', 'Rainfall']].values\n",
+        "y1 = dataset['MaxTemp'].values"
+      ],
+      "metadata": {
+        "id": "zx-E9GXWciEW"
+      },
+      "execution_count": 33,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X1_train, X1_test, y1_train, y1_test = train_test_split(X1, y1, test_size=0.2, random_state=0)"
+      ],
+      "metadata": {
+        "id": "YWxKYhK2dWF9"
+      },
+      "execution_count": 34,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "regressor2 = LinearRegression()\n",
+        "regressor2.fit(X1_train, y1_train)"
+      ],
+      "metadata": {
+        "id": "kp8fXf8TeFIM"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X11 = pd.DataFrame(X1)"
+      ],
+      "metadata": {
+        "id": "vWHcoABdgAF2"
+      },
+      "execution_count": 36,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "coeff_df = pd.DataFrame(regressor2.coef_, X11.columns, columns=['Coefficient'])\n",
+        "coeff_df"
+      ],
+      "metadata": {
+        "id": "rGzb8vXye0j9"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "y_pred2 = regressor2.predict(X1_test)"
+      ],
+      "metadata": {
+        "id": "3UkjdKWfgjb8"
+      },
+      "execution_count": 38,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df = pd.DataFrame({'Actual': y1_test, 'Predicted': y_pred2})\n",
+        "df.head(25)"
+      ],
+      "metadata": {
+        "id": "7ChMAxEkgrvE"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df1 = df.head(25)"
+      ],
+      "metadata": {
+        "id": "HKQwdcCvg66M"
+      },
+      "execution_count": 40,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df1.plot(kind='bar',figsize=(10,8))\n",
+        "plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')\n",
+        "plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "fomKEJfohFUb"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print('Mean Absolute Error:', metrics.mean_absolute_error(y1_test, y_pred2))\n",
+        "print('Mean Squared Error:', metrics.mean_squared_error(y1_test, y_pred2))\n",
+        "print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y1_test, y_pred2)))"
+      ],
+      "metadata": {
+        "id": "DQhHGBqYhJK-"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "####Predict y using certain values"
+      ],
+      "metadata": {
+        "id": "muHJDcG3bWTo"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "['MinTemp', 'Sunshine', 'Rainfall']"
+      ],
+      "metadata": {
+        "id": "ST2QTnYpb7JU"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "d = {'MinTemp': [30],'Sunshine': [0.2],'Rainfall': [4]}\n",
+        "df1 = pd.DataFrame(data=d)\n",
+        "df1"
+      ],
+      "metadata": {
+        "id": "aybDwXXcVjKP"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "y_new2 = regressor2.predict(df1)"
+      ],
+      "metadata": {
+        "id": "1Z_N3mlOcWqI"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "y_new2"
+      ],
+      "metadata": {
+        "id": "vWArua-nbWTp"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "###Using a set of data"
+      ],
+      "metadata": {
+        "id": "34iceCGHf4xz"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "d2 = {'MinTemp': [30,20,40],'Sunshine': [0.2, 0.5, 0.8],'Rainfall': [4, 5, 9]}\n",
+        "df2 = pd.DataFrame(data=d2)\n",
+        "df2"
+      ],
+      "metadata": {
+        "id": "yHzhnw40f5fB"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "y_new22 = regressor2.predict(df2)"
+      ],
+      "metadata": {
+        "id": "enXVbTMmf5fB"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "y_new22"
+      ],
+      "metadata": {
+        "id": "0zIRH035f5fC"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#END"
+      ],
+      "metadata": {
+        "id": "hZxtDy0TVIr8"
+      }
+    }
+  ]
+}

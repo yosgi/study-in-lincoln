@@ -1,0 +1,277 @@
+{
+    "nbformat": 4,
+    "nbformat_minor": 0,
+    "metadata": {
+      "colab": {
+        "provenance": []
+      },
+      "kernelspec": {
+        "name": "python3",
+        "display_name": "Python 3"
+      },
+      "language_info": {
+        "name": "python"
+      }
+    },
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#Supervised ML: Logistic Regression"
+        ],
+        "metadata": {
+          "id": "eTcwpq-woHeM"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##1-Data preparation"
+        ],
+        "metadata": {
+          "id": "L4mW5Zd642za"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "!pip install yfinance"
+        ],
+        "metadata": {
+          "id": "ESwBRjMvoMCc"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import yfinance as yf\n",
+          "import pandas as pd\n",
+          "import numpy as np\n",
+          "from sklearn.model_selection import train_test_split\n",
+          "from sklearn.linear_model import LogisticRegression"
+        ],
+        "metadata": {
+          "id": "U3CwV3eTpH5k"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##2-Data manupulation"
+        ],
+        "metadata": {
+          "id": "iY_8viCf4-8N"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "## Calculate percentage change\n",
+          "df['PercentageChange'] = df['Adj Close'].pct_change()\n",
+          "\n",
+          "# Create target variable (1 if pct_change > 0, 0 otherwise)\n",
+          "df['Direction'] = (df['PercentageChange'] > 0).astype(int)\n",
+          "\n",
+          "# Drop missing values\n",
+          "df = df.dropna()\n",
+          "\n",
+          "# Select features (you can add more features here)\n",
+          "X = df[['Close']]\n",
+          "y = df['Direction']"
+        ],
+        "metadata": {
+          "id": "hseluCjqpKG7"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##3-Model building"
+        ],
+        "metadata": {
+          "id": "AWCSC04x5FvV"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "X_train, X_test, y_train, y_test = train_test_split(X, y)"
+        ],
+        "metadata": {
+          "id": "gkKr12oypLTc"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "model = LogisticRegression()\n",
+          "model.fit(X_train, y_train)"
+        ],
+        "metadata": {
+          "id": "a8bVuXugpM8A"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "predictions = model.predict(X_test)"
+        ],
+        "metadata": {
+          "id": "w9kiJ3M2pOHD"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from sklearn.metrics import accuracy_score\n",
+          "accuracy = accuracy_score(y_test, predictions)\n",
+          "print(f\"Accuracy: {accuracy}\")"
+        ],
+        "metadata": {
+          "id": "ypLgHElNpPN-",
+          "colab": {
+            "base_uri": "https://localhost:8080/"
+          },
+          "outputId": "61bae841-38e4-43c4-b89a-2fe14289f232"
+        },
+        "execution_count": null,
+        "outputs": [
+          {
+            "output_type": "stream",
+            "name": "stdout",
+            "text": [
+              "Accuracy: 0.48\n"
+            ]
+          }
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##4-Multiple inputs"
+        ],
+        "metadata": {
+          "id": "c0ZaWYCs5W8P"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "df['Adj Close Lag 2'] = df['Adj Close'].shift(2)\n",
+          "df['Direction'] = np.where(df['Adj Close'] > df['Adj Close'].shift(1), 1, 0)\n",
+          "df = df[['Adj Close', 'Adj Close Lag 2', 'Volume', 'Direction']]\n",
+          "df.dropna(inplace=True)"
+        ],
+        "metadata": {
+          "id": "ghwARekUwknz"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "df.head()"
+        ],
+        "metadata": {
+          "id": "lZx4MkX9ylob"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from sklearn.metrics import accuracy_score\n",
+          "\n",
+          "# Prepare data\n",
+          "X = df[['Adj Close', 'Adj Close Lag 2', 'Volume']]\n",
+          "y = df['Direction']\n",
+          "\n",
+          "# Split into training and testing sets\n",
+          "X_train, X_test, y_train, y_test = train_test_split(X, y)\n",
+          "\n",
+          "# Create and fit the model\n",
+          "model = LogisticRegression()\n",
+          "model.fit(X_train, y_train)\n",
+          "\n",
+          "# Make predictions\n",
+          "predictions = model.predict(X_test)\n",
+          "\n",
+          "# Evaluate the model\n",
+          "accuracy = accuracy_score(y_test, predictions)\n",
+          "print(f\"Accuracy: {accuracy}\")"
+        ],
+        "metadata": {
+          "id": "9nQdKeBMxukx"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from sklearn.metrics import confusion_matrix\n",
+          "\n",
+          "# Generate the confusion matrix\n",
+          "cm = confusion_matrix(y_test, predictions)\n",
+          "\n",
+          "# Print the confusion matrix\n",
+          "print(cm)"
+        ],
+        "metadata": {
+          "id": "Dtt2XDin2zd4"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##5-Prediction with new inputs"
+        ],
+        "metadata": {
+          "id": "Cu4cKHWq6Xd3"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# New data for prediction (replace with your actual values)\n",
+          "new_data = pd.DataFrame({'Adj Close': [100], 'Adj Close Lag 2': [190], 'Volume': [200000]})\n",
+          "\n",
+          "# Make predictions\n",
+          "new_predictions = model.predict(new_data)\n",
+          "\n",
+          "# Print the prediction (0 or 1)\n",
+          "print(new_predictions[0])"
+        ],
+        "metadata": {
+          "id": "69mvJ7DyyJUF"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##END"
+        ],
+        "metadata": {
+          "id": "gmRaxngV6dbE"
+        }
+      }
+    ]
+  }
