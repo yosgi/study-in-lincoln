@@ -1,0 +1,659 @@
+{
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "drci0rlfJn6L"
+        },
+        "source": [
+          "## TIME SERIES ANALYSIS: AR/MA\n",
+          "FORECASTING CHAMPAGNE SALES"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "s4X4LA1QJn6O"
+        },
+        "source": [
+          "### Import data"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "G657WDraJn6O"
+        },
+        "outputs": [],
+        "source": [
+          "import numpy as np\n",
+          "import pandas as pd\n",
+          "import matplotlib.pyplot as plt\n",
+          "import statsmodels as sm\n",
+          "sm.__version__"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from google.colab import files"
+        ],
+        "metadata": {
+          "id": "WSeLM8QucISJ"
+        },
+        "execution_count": 2,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import io\n",
+          "uploaded = files.upload()\n",
+          "df = pd.read_csv(io.BytesIO(uploaded['champagne.csv']))"
+        ],
+        "metadata": {
+          "id": "gXG3AjIjhEK4"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 4,
+        "metadata": {
+          "id": "YXRnwFd6Jn6P"
+        },
+        "outputs": [],
+        "source": [
+          "df = pd.read_csv('champagne.csv')"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "D5TJCzOLJn6Q"
+        },
+        "outputs": [],
+        "source": [
+          "df.head()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "XxI2ST-yJn6Q"
+        },
+        "outputs": [],
+        "source": [
+          "df.tail()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 7,
+        "metadata": {
+          "id": "nE5Nifl0Jn6R"
+        },
+        "outputs": [],
+        "source": [
+          "df.drop([106,105],axis=0,inplace=True)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "NaTekxBrJn6R"
+        },
+        "outputs": [],
+        "source": [
+          "df.columns=[\"Month\",\"Sales\"]\n",
+          "df.head()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 9,
+        "metadata": {
+          "id": "d9Zh05cIJn6S"
+        },
+        "outputs": [],
+        "source": [
+          "df['Month']=pd.to_datetime(df['Month'])"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 10,
+        "metadata": {
+          "id": "T0v2wT-jJn6S"
+        },
+        "outputs": [],
+        "source": [
+          "df.set_index('Month',inplace=True)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "vwpL_Y5DJn6T"
+        },
+        "outputs": [],
+        "source": [
+          "df.head()"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###Data Describe"
+        ],
+        "metadata": {
+          "id": "28x2In3QVS_j"
+        }
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "BakhzNJGJn6T"
+        },
+        "outputs": [],
+        "source": [
+          "df.describe()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "GNZqoBYgJn6T"
+        },
+        "outputs": [],
+        "source": [
+          "df.plot()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from statsmodels.tsa.seasonal import seasonal_decompose"
+        ],
+        "metadata": {
+          "id": "icX8-rEEKzSe"
+        },
+        "execution_count": 14,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "decomposition = seasonal_decompose(df.iloc[:,-1])\n",
+          "fig = plt.figure()\n",
+          "fig = decomposition.plot()\n",
+          "fig.set_size_inches(12,5)\n",
+          "plt.savefig('Graph_Trend_and_Season_F612.png')"
+        ],
+        "metadata": {
+          "id": "6EaPt0ifKoA-"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import statsmodels.tsa.api as smt\n",
+          "import seaborn as sns"
+        ],
+        "metadata": {
+          "id": "4M5CTQJrL5ZN"
+        },
+        "execution_count": 19,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "def tsplot(y, lags=None, title='', figsize=(14, 8)):\n",
+          "\n",
+          "    fig = plt.figure(figsize=figsize)\n",
+          "    layout = (2, 2)\n",
+          "    ts_ax   = plt.subplot2grid(layout, (0, 0))\n",
+          "    hist_ax = plt.subplot2grid(layout, (0, 1))\n",
+          "    acf_ax  = plt.subplot2grid(layout, (1, 0))\n",
+          "    pacf_ax = plt.subplot2grid(layout, (1, 1))\n",
+          "\n",
+          "    y.plot(ax=ts_ax)\n",
+          "    ts_ax.set_title(title)\n",
+          "    y.plot(ax=hist_ax, kind='hist', bins=25)\n",
+          "    hist_ax.set_title('Histogram')\n",
+          "    smt.graphics.plot_acf(y, lags=lags, ax=acf_ax)\n",
+          "    smt.graphics.plot_pacf(y, lags=lags, ax=pacf_ax)\n",
+          "    [ax.set_xlim(0) for ax in [acf_ax, pacf_ax]]\n",
+          "    sns.despine()\n",
+          "    fig.tight_layout()\n",
+          "    return ts_ax, acf_ax, pacf_ax"
+        ],
+        "metadata": {
+          "id": "9XRkZJLhLg_9"
+        },
+        "execution_count": 20,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "tsplot(df, title='Output of Champagne', lags=5)"
+        ],
+        "metadata": {
+          "id": "AeV2_W2lLiRK"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 24,
+        "metadata": {
+          "id": "7OAIIy8eJn6U"
+        },
+        "outputs": [],
+        "source": [
+          "from statsmodels.tsa.stattools import adfuller"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 25,
+        "metadata": {
+          "id": "EBeNFoMoJn6U"
+        },
+        "outputs": [],
+        "source": [
+          "def adfuller_test(sales):\n",
+          "    result = adfuller(sales)\n",
+          "    labels = ['ADF Test Statistic','p-value','#Lags Used','#Observation Used']\n",
+          "    for value,label in zip(result,labels):\n",
+          "        print(label  + ': ' + str(value))\n",
+          "    if result[1]<=0.05:\n",
+          "        print('Strong evidence against the null hypothesis, Hence REJECT Ho. and The series is Stationary')\n",
+          "    else:\n",
+          "        print('week evidence against null hypothesis, Hence ACCEPT Ho. that the series is not stationary.')"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "4sq2Y1opJn6U"
+        },
+        "outputs": [],
+        "source": [
+          "adfuller_test(df['Sales'])"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "8oD7MUJDJn6V"
+        },
+        "source": [
+          "### Differencing"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 27,
+        "metadata": {
+          "id": "uPNOvxMlJn6V"
+        },
+        "outputs": [],
+        "source": [
+          "df['Sales First Difference'] = df['Sales'] - df['Sales'].shift(1)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "VM_0VcawJn6V"
+        },
+        "outputs": [],
+        "source": [
+          "df['Sales'].shift(1).head()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 30,
+        "metadata": {
+          "id": "G6LX4n3DJn6V"
+        },
+        "outputs": [],
+        "source": [
+          "df['Seasonal First Difference']=df['Sales']-df['Sales'].shift(12)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "z-NjSs_PJn6V"
+        },
+        "outputs": [],
+        "source": [
+          "df.head(15)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "adfuller_test(df['Sales First Difference'].dropna())"
+        ],
+        "metadata": {
+          "id": "BwLr63RaOsJh"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 35,
+        "metadata": {
+          "id": "bhTiXoM4PcVr"
+        },
+        "outputs": [],
+        "source": [
+          "from statsmodels.graphics.tsaplots import plot_acf,plot_pacf"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "mFHFKSfkPcV1"
+        },
+        "outputs": [],
+        "source": [
+          "fig = plt.figure(figsize=(12,8))\n",
+          "ax1 = fig.add_subplot(211)\n",
+          "fig = sm.graphics.tsaplots.plot_acf(df['Sales First Difference'].iloc[13:],lags=40,ax=ax1)\n",
+          "ax2 = fig.add_subplot(212)\n",
+          "fig = sm.graphics.tsaplots.plot_pacf(df['Sales First Difference'].iloc[13:],lags=40,ax=ax2)"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "hAOOoMOFJn6W"
+        },
+        "outputs": [],
+        "source": [
+          "adfuller_test(df['Seasonal First Difference'].dropna())"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "tB_kCqIOJn6W"
+        },
+        "outputs": [],
+        "source": [
+          "df['Seasonal First Difference'].plot()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "scrolled": true,
+          "id": "VBAmtuxcJn6W"
+        },
+        "outputs": [],
+        "source": [
+          "from pandas.plotting import autocorrelation_plot\n",
+          "autocorrelation_plot(df['Sales'])\n",
+          "plt.show()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": 40,
+        "metadata": {
+          "id": "G8XGV_L5Jn6W"
+        },
+        "outputs": [],
+        "source": [
+          "from statsmodels.graphics.tsaplots import plot_acf,plot_pacf"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "TUKgUrF5Jn6W"
+        },
+        "outputs": [],
+        "source": [
+          "fig = plt.figure(figsize=(12,8))\n",
+          "ax1 = fig.add_subplot(211)\n",
+          "fig = sm.graphics.tsaplots.plot_acf(df['Seasonal First Difference'].iloc[13:],lags=40,ax=ax1)\n",
+          "ax2 = fig.add_subplot(212)\n",
+          "fig = sm.graphics.tsaplots.plot_pacf(df['Seasonal First Difference'].iloc[13:],lags=40,ax=ax2)"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "ddo3jyVsJn6W"
+        },
+        "source": [
+          "<br>"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "CM37CyUIJn6W"
+        },
+        "source": [
+          "## ARIMA"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###Model 1"
+        ],
+        "metadata": {
+          "id": "YFNRgW2IQU-Q"
+        }
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "yktyqtT4Jn6W"
+        },
+        "outputs": [],
+        "source": [
+          "# For non-seasonal data\n",
+          "# p=1, d=1, q=1\n",
+          "from statsmodels.tsa.arima.model import ARIMA\n",
+          "model_A = ARIMA(df['Sales'],order=(X,X,X))\n",
+          "model_fit_A = model_A.fit()\n",
+          "model_fit_A.summary()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "9Z8S4HY0Jn6X"
+        },
+        "outputs": [],
+        "source": [
+          "df['forecast']=model_fit_A.predict(start=90,end=103,dynamic=True)\n",
+          "df[['Sales','forecast']].plot(figsize=(12,8))"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###Model 2"
+        ],
+        "metadata": {
+          "id": "1x7hcY-mQRVx"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# For non-seasonal data\n",
+          "# p=1, d=1, q=12\n",
+          "from statsmodels.tsa.arima.model import ARIMA\n",
+          "model_B = ARIMA(df['Sales'],order=(X,X,X))\n",
+          "model_fit_B = model_B.fit()\n",
+          "model_fit_B.summary()"
+        ],
+        "metadata": {
+          "id": "h7V51UnmNH4o"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "uoS1vjgaNo2F"
+        },
+        "outputs": [],
+        "source": [
+          "df['forecast']=model_fit_B.predict(start=90,end=103,dynamic=True)\n",
+          "df[['Sales','forecast']].plot(figsize=(12,8))"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###Model 3"
+        ],
+        "metadata": {
+          "id": "oruc8ENUQL0Q"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# For non-seasonal data\n",
+          "# p=2, d=1, q=12\n",
+          "from statsmodels.tsa.arima.model import ARIMA\n",
+          "model_C = ARIMA(df['Sales'],order=(X,X,X))\n",
+          "model_fit_C = model_C.fit()\n",
+          "model_fit_C.summary()"
+        ],
+        "metadata": {
+          "id": "RH8G0S3MPrUw"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "2jMo11MiPjSh"
+        },
+        "outputs": [],
+        "source": [
+          "df['forecast']=model_fit_C.predict(start=90,end=103,dynamic=True)\n",
+          "df[['Sales','forecast']].plot(figsize=(12,8))"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "2fubsg4HJn6X"
+        },
+        "source": [
+          "### SARIMA"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "X8pyamyhJn6X"
+        },
+        "outputs": [],
+        "source": [
+          "model=sm.tsa.statespace.sarimax.SARIMAX(df['Sales'],order=(X,X,X),seasonal_order=(X,X,X,X))\n",
+          "results=model.fit()"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "results.summary()"
+        ],
+        "metadata": {
+          "id": "XIW7Jlb0OFRA"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "BtFoNdqIJn6X"
+        },
+        "outputs": [],
+        "source": [
+          "df['forecast']=results.predict(start=90,end=103,dynamic=True)\n",
+          "df[['Sales','forecast']].plot(figsize=(12,8))"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#END"
+        ],
+        "metadata": {
+          "id": "JL94q_mbQebH"
+        }
+      }
+    ],
+    "metadata": {
+      "kernelspec": {
+        "display_name": "Python 3",
+        "language": "python",
+        "name": "python3"
+      },
+      "language_info": {
+        "codemirror_mode": {
+          "name": "ipython",
+          "version": 3
+        },
+        "file_extension": ".py",
+        "mimetype": "text/x-python",
+        "name": "python",
+        "nbconvert_exporter": "python",
+        "pygments_lexer": "ipython3",
+        "version": "3.8.0"
+      },
+      "colab": {
+        "provenance": []
+      }
+    },
+    "nbformat": 4,
+    "nbformat_minor": 0
+  }
