@@ -1,0 +1,791 @@
+{
+    "nbformat": 4,
+    "nbformat_minor": 0,
+    "metadata": {
+      "colab": {
+        "provenance": [],
+        "collapsed_sections": [
+          "PA6r0DtcFndH",
+          "zUNrWSL-Fsga",
+          "Zu_zeRPlFxMJ",
+          "U-4Jdol1J0Dp",
+          "4Yi_LktnGbCY",
+          "aypNV8IjHANV",
+          "kJadZiI6IGrH",
+          "TyZKyQbxItu0"
+        ]
+      },
+      "kernelspec": {
+        "name": "python3",
+        "display_name": "Python 3"
+      },
+      "language_info": {
+        "name": "python"
+      }
+    },
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#Time Series Analysis: Daily Data"
+        ],
+        "metadata": {
+          "id": "0b2vTl0yx3_7"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##1-Install packages"
+        ],
+        "metadata": {
+          "id": "PA6r0DtcFndH"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "!pip install statsmodels==0.14.0"
+        ],
+        "metadata": {
+          "id": "U03ESEPsz2A4"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import yfinance as yf\n",
+          "import pandas as pd\n",
+          "import numpy as np\n",
+          "import seaborn as sns\n",
+          "import matplotlib.pyplot as plt"
+        ],
+        "metadata": {
+          "id": "kh2ph8Oox6wV"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##2-Data preparation"
+        ],
+        "metadata": {
+          "id": "zUNrWSL-Fsga"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "tikers = [\"TTTT\"]"
+        ],
+        "metadata": {
+          "id": "P0pLD5wGx6wW"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "fc = yf.download(tikers, start=\"2022-01-01\", end =\"2024-08-01\")\n"
+        ],
+        "metadata": {
+          "id": "sMEY-d3Bx6wW"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "fc.head(5)"
+        ],
+        "metadata": {
+          "id": "xcXGeQ-7x6wW"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Get adj close\n",
+          "fc = fc['Adj Close']"
+        ],
+        "metadata": {
+          "id": "TyvV9W4hzdW7"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "fc.head(5)"
+        ],
+        "metadata": {
+          "id": "pYqC6vxY0MVw"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "data_length = len(fc)\n",
+          "data_length"
+        ],
+        "metadata": {
+          "id": "M_X7w_1w94kJ"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##3-Time series preliminary analysis"
+        ],
+        "metadata": {
+          "id": "Zu_zeRPlFxMJ"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from statsmodels.tsa.stattools import adfuller\n",
+          "from statsmodels.tsa.seasonal import seasonal_decompose\n",
+          "from statsmodels.graphics.tsaplots import plot_acf, plot_pacf"
+        ],
+        "metadata": {
+          "id": "phldqU4Vz3Sa"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Augmented Dickey-Fuller test\n",
+          "result = adfuller(fc)\n",
+          "print('ADF Statistic:', result[0])\n",
+          "print('p-value:', result[1])\n",
+          "print('Critical Values:', result[4])"
+        ],
+        "metadata": {
+          "id": "BtVd8Rwkz4X6"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Plot ACF and PACF\n",
+          "fig, axes = plt.subplots(1, 2, figsize=(15, 5))\n",
+          "\n",
+          "plot_acf(fc, ax=axes[0])\n",
+          "plot_pacf(fc, ax=axes[1])\n",
+          "\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "1UPVYWmE0b9T"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "Seasonality"
+        ],
+        "metadata": {
+          "id": "RNthkAGH1oBU"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "decomposition = seasonal_decompose(fc, model='additive', period=12)\n",
+          "\n",
+          "# Plot the decomposed components\n",
+          "plt.figure(figsize=(12, 8))\n",
+          "\n",
+          "plt.subplot(411)\n",
+          "plt.plot(decomposition.observed, label='Observed')\n",
+          "plt.legend(loc='best')\n",
+          "\n",
+          "plt.subplot(412)\n",
+          "plt.plot(decomposition.trend, label='Trend')\n",
+          "plt.legend(loc='best')\n",
+          "\n",
+          "plt.subplot(413)\n",
+          "plt.plot(decomposition.seasonal, label='Seasonal')\n",
+          "plt.legend(loc='best')\n",
+          "\n",
+          "plt.subplot(414)\n",
+          "plt.plot(decomposition.resid, label='Residual')\n",
+          "plt.legend(loc='best')\n",
+          "\n",
+          "plt.tight_layout()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "5FPrpkRZ2KZI"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##4-Fitting"
+        ],
+        "metadata": {
+          "id": "CLYxGRLn32bE"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###4.1- ARIMA"
+        ],
+        "metadata": {
+          "id": "U-4Jdol1J0Dp"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from statsmodels.tsa.arima.model import ARIMA\n",
+          "model = ARIMA(fc.values, order=(0,0,0))\n",
+          "model_fit = model.fit()\n",
+          "print(model_fit.summary())"
+        ],
+        "metadata": {
+          "id": "1qExfXut35wZ"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "model = ARIMA(fc.values, order=(0,0,0))\n",
+          "model_fit = model.fit()\n",
+          "print(model_fit.summary())"
+        ],
+        "metadata": {
+          "id": "vxX4ryRx4drV"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "model = ARIMA(fc.values, order=(0,0,0))\n",
+          "model_fit = model.fit()\n",
+          "print(model_fit.summary())"
+        ],
+        "metadata": {
+          "id": "hyWGTvSZ5NzN"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###4.2-Prediction with ARIMA"
+        ],
+        "metadata": {
+          "id": "4Yi_LktnGbCY"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import matplotlib.pyplot as plt\n",
+          "from statsmodels.tsa.arima.model import ARIMA\n",
+          "\n",
+          "# Predict the next 10 steps\n",
+          "predictions = model_fit.predict(start=len(fc), end=len(fc) + 9)\n",
+          "\n",
+          "# Plot the original data and predictions\n",
+          "plt.plot(fc.values, label='Original')\n",
+          "plt.plot(range(len(fc), len(fc) + 10), predictions, label='Predictions')\n",
+          "plt.legend()\n",
+          "plt.show()\n"
+        ],
+        "metadata": {
+          "id": "usl1otw76V2H"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Predict for steps 90 to 103\n",
+          "predictions = model_fit.predict(start=90, end=103)\n",
+          "\n",
+          "# Plot the original data and predictions\n",
+          "plt.plot(fc.values, label='Original')\n",
+          "plt.plot(range(90, 104), predictions, label='Predictions')\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "NYbElMLh6zkf"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Predict for steps 600 to 650\n",
+          "predictions = model_fit.predict(start=600, end=650)\n",
+          "\n",
+          "# Plot the original data and predictions\n",
+          "plt.plot(fc.values, label='Original')\n",
+          "plt.plot(range(600, 651), predictions, label='Predictions')\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "SjwELFSD644_"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score\n",
+          "\n",
+          "# Predict for steps 600 to 646 #changed the end value to ensure that the prediction output is the same length as the sliced fc.values\n",
+          "predictions = model_fit.predict(start=600, end=646)\n",
+          "\n",
+          "# Get the actual values for steps 600 to 647\n",
+          "y_true = fc.values[600:647] #changed the end value to match the length of the prediction\n",
+          "\n",
+          "# Calculate MSE\n",
+          "mse = mean_squared_error(y_true, predictions)\n",
+          "\n",
+          "# Calculate RMSE\n",
+          "rmse = np.sqrt(mse)\n",
+          "\n",
+          "# Calculate MAE\n",
+          "mae = mean_absolute_error(y_true, predictions)\n",
+          "\n",
+          "# Calculate R-squared\n",
+          "r2 = r2_score(y_true, predictions)\n",
+          "\n",
+          "# Print the results\n",
+          "print(f\"MSE: {mse:.4f}\")\n",
+          "print(f\"RMSE: {rmse:.4f}\")\n",
+          "print(f\"MAE: {mae:.4f}\")\n",
+          "print(f\"R-squared: {r2:.4f}\")\n",
+          "\n",
+          "# Plot the original data and predictions\n",
+          "plt.plot(fc.values, label='Original')\n",
+          "plt.plot(range(600, 647), predictions, label='Predictions') #changed the end value to match the new range\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "BQ0i3_KK9mlH"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###4.3-SARIMA"
+        ],
+        "metadata": {
+          "id": "aypNV8IjHANV"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from statsmodels.tsa.statespace.sarimax import SARIMAX\n",
+          "from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score\n",
+          "\n",
+          "# Fit the SARIMAX model (example order and seasonal_order)\n",
+          "model = SARIMAX(fc, order=(0, 0, 0), seasonal_order=(0, 0, 0, 0))\n",
+          "model_fit = model.fit()\n",
+          "\n",
+          "# Predict for steps 600 to 646\n",
+          "predictions = model_fit.predict(start=600, end=646)\n",
+          "\n",
+          "# Get the actual values for steps 600 to 646\n",
+          "y_true = fc.values[600:647]\n",
+          "\n",
+          "# Calculate MSE\n",
+          "mse = mean_squared_error(y_true, predictions)\n",
+          "\n",
+          "# Calculate RMSE\n",
+          "rmse = np.sqrt(mse)\n",
+          "\n",
+          "# Calculate MAE\n",
+          "mae = mean_absolute_error(y_true, predictions)\n",
+          "\n",
+          "# Calculate R-squared\n",
+          "r2 = r2_score(y_true, predictions)\n",
+          "\n",
+          "# Print the results\n",
+          "print(f\"MSE: {mse:.4f}\")\n",
+          "print(f\"RMSE: {rmse:.4f}\")\n",
+          "print(f\"MAE: {mae:.4f}\")\n",
+          "print(f\"R-squared: {r2:.4f}\")\n",
+          "\n",
+          "# Plot the original data and predictions\n",
+          "plt.plot(fc.values, label='Original')\n",
+          "plt.plot(range(600, 647), predictions, label='Predictions')\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "6VUJUJgtBkuy"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Fit the SARIMAX model (example order and seasonal_order)\n",
+          "model = SARIMAX(fc, order=(0, 0, 0), seasonal_order=(0, 0, 0, 0))\n",
+          "model_fit = model.fit()\n",
+          "\n",
+          "# Predict for steps 600 to 646\n",
+          "predictions = model_fit.predict(start=600, end=646)\n",
+          "\n",
+          "# Get the actual values for steps 600 to 646\n",
+          "y_true = fc.values[600:647]\n",
+          "\n",
+          "# Calculate MSE\n",
+          "mse = mean_squared_error(y_true, predictions)\n",
+          "\n",
+          "# Calculate RMSE\n",
+          "rmse = np.sqrt(mse)\n",
+          "\n",
+          "# Calculate MAE\n",
+          "mae = mean_absolute_error(y_true, predictions)\n",
+          "\n",
+          "# Calculate R-squared\n",
+          "r2 = r2_score(y_true, predictions)\n",
+          "\n",
+          "# Print the results\n",
+          "print(f\"MSE: {mse:.4f}\")\n",
+          "print(f\"RMSE: {rmse:.4f}\")\n",
+          "print(f\"MAE: {mae:.4f}\")\n",
+          "print(f\"R-squared: {r2:.4f}\")\n",
+          "\n",
+          "# Plot the original data and predictions\n",
+          "plt.plot(fc.values, label='Original')\n",
+          "plt.plot(range(600, 647), predictions, label='Predictions')\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "Fc02FttgBvtr"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###4.4-ARIMAX - SARIMAX"
+        ],
+        "metadata": {
+          "id": "kJadZiI6IGrH"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from statsmodels.tsa.statespace.sarimax import SARIMAX\n",
+          "\n",
+          "# Download data from Yahoo Finance\n",
+          "data = yf.download([\"META\", \"GOOG\", \"TSLA\"], start=\"2020-01-01\", end=\"2023-01-01\")\n",
+          "\n",
+          "# Extract adj closing prices\n",
+          "df = data['Adj Close']\n",
+          "\n",
+          "# Create the ARIMAX model\n",
+          "# and including META and GOOG as exogenous variables\n",
+          "model = SARIMAX(endog=df['TSLA'], exog=df[['META', 'GOOG']], order=(0, 0, 0))\n",
+          "model_fit = model.fit()\n",
+          "\n",
+          "# Print the model summary\n",
+          "print(model_fit.summary())\n",
+          "\n",
+          "# Get the coefficients for the exogenous variables\n",
+          "meta_coef = model_fit.params['META']\n",
+          "goog_coef = model_fit.params['GOOG']\n",
+          "\n",
+          "# Print the coefficients\n",
+          "print(f\"META Coefficient: {meta_coef:.4f}\")\n",
+          "print(f\"GOOG Coefficient: {goog_coef:.4f}\")\n",
+          "\n",
+          "# Plot the actual and fitted values for TSLA\n",
+          "plt.plot(df['TSLA'], label='Actual')\n",
+          "plt.plot(model_fit.fittedvalues, label='Fitted')\n",
+          "plt.legend()\n",
+          "plt.title('TSLA Actual vs. Fitted Values')\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "2xiZUeCcDYsW"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from statsmodels.tsa.arima.model import ARIMA\n",
+          "\n",
+          "# Download data from Yahoo Finance\n",
+          "data = yf.download([\"META\", \"GOOG\", \"TSLA\"], start=\"2020-01-01\", end=\"2023-01-01\")\n",
+          "\n",
+          "# Extract adj closing prices\n",
+          "df = data['Adj Close']\n",
+          "\n",
+          "# Create the ARIMAX model\n",
+          "# and including META and GOOG as exogenous variables\n",
+          "model = ARIMA(endog=df['TSLA'], exog=df[['META', 'GOOG']], order=(0, 0, 0))\n",
+          "model_fit = model.fit()\n",
+          "\n",
+          "# Print the model summary\n",
+          "print(model_fit.summary())\n",
+          "\n",
+          "# Get the coefficients for the exogenous variables\n",
+          "meta_coef = model_fit.params['META']\n",
+          "goog_coef = model_fit.params['GOOG']\n",
+          "\n",
+          "# Print the coefficients\n",
+          "print(f\"META Coefficient: {meta_coef:.4f}\")\n",
+          "print(f\"GOOG Coefficient: {goog_coef:.4f}\")\n",
+          "\n",
+          "# Plot the actual and fitted values for TSLA\n",
+          "plt.plot(df['TSLA'], label='Actual')\n",
+          "plt.plot(model_fit.fittedvalues, label='Fitted')\n",
+          "plt.legend()\n",
+          "plt.title('TSLA Actual vs. Fitted Values')\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "0l81O1ZOEA0b"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from statsmodels.tsa.statespace.sarimax import SARIMAX\n",
+          "\n",
+          "# Download data from Yahoo Finance\n",
+          "data = yf.download([\"META\", \"GOOG\", \"TSLA\"], start=\"2020-01-01\", end=\"2023-01-01\")\n",
+          "\n",
+          "# Extract adj closing prices\n",
+          "df = data['Adj Close']\n",
+          "\n",
+          "# Create the ARIMAX model\n",
+          "# and including META and GOOG as exogenous variables\n",
+          "model = SARIMAX(endog=df['TSLA'], exog=df[['META', 'GOOG']], order=(1, 0, 1))\n",
+          "model_fit = model.fit()\n",
+          "\n",
+          "# Print the model summary\n",
+          "print(model_fit.summary())\n",
+          "\n",
+          "# Get the coefficients for the exogenous variables\n",
+          "meta_coef = model_fit.params['META']\n",
+          "goog_coef = model_fit.params['GOOG']\n",
+          "\n",
+          "# Print the coefficients\n",
+          "print(f\"META Coefficient: {meta_coef:.4f}\")\n",
+          "print(f\"GOOG Coefficient: {goog_coef:.4f}\")\n",
+          "\n",
+          "# Plot the actual and fitted values for TSLA\n",
+          "plt.plot(df['TSLA'], label='Actual')\n",
+          "plt.plot(model_fit.fittedvalues, label='Fitted')\n",
+          "plt.legend()\n",
+          "plt.title('TSLA Actual vs. Fitted Values')\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "vGacNKjfnIy0"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Get predictions\n",
+          "predictions = model_fit.get_prediction()\n",
+          "predicted_mean = predictions.predicted_mean\n",
+          "\n",
+          "# Evaluate the model\n",
+          "mse = mean_squared_error(df['TSLA'], predicted_mean)\n",
+          "rmse = mean_squared_error(df['TSLA'], predicted_mean, squared=False)\n",
+          "mae = mean_absolute_error(df['TSLA'], predicted_mean)\n",
+          "r2 = r2_score(df['TSLA'], predicted_mean)\n",
+          "\n",
+          "print(f\"Mean Squared Error (MSE): {mse:.4f}\")\n",
+          "print(f\"Root Mean Squared Error (RMSE): {rmse:.4f}\")\n",
+          "print(f\"Mean Absolute Error (MAE): {mae:.4f}\")\n",
+          "print(f\"R-squared (R2): {r2:.4f}\")\n",
+          "\n",
+          "# Plot the actual and predicted values\n",
+          "plt.plot(df['TSLA'], label='Actual')\n",
+          "plt.plot(predicted_mean, label='Predicted')\n",
+          "plt.legend()\n",
+          "plt.title('TSLA Actual vs Predicted Values')\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "EgwbIVjxqKtC"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "df_length = len(df)\n",
+          "print(df_length)"
+        ],
+        "metadata": {
+          "id": "YoaIMNllrXUA"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "print(model_fit.predict(start=len(df), end=len(df), exog=[[150, 120]]))"
+        ],
+        "metadata": {
+          "id": "mJ7mLbjKqrsa"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "print(model_fit.predict(start=len(df), end=len(df)+1, exog=[[150, 120], [150, 120]])) # the exog argument needs to have the same number of rows as the number of predictions"
+        ],
+        "metadata": {
+          "id": "Fh9A_jgEsxQO"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [],
+        "metadata": {
+          "id": "R3sSdkXro0Np"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "#from statsmodels.tsa.statespace.sarimax import SARIMAX\n",
+          "\n",
+          "# Download data from Yahoo Finance\n",
+          "data = yf.download([\"META\", \"GOOG\", \"TSLA\"], start=\"2020-01-01\", end=\"2023-01-01\")\n",
+          "\n",
+          "# Extract adj closing prices\n",
+          "df = data['Adj Close']\n",
+          "\n",
+          "# Create the ARIMAX model\n",
+          "# and including META and GOOG as exogenous variables\n",
+          "model = SARIMAX(endog=df['TSLA'], exog=df[['META', 'GOOG']], order=(1, 0, 1), seasonal_order=(1, 1, 1, 12))\n",
+          "model_fit = model.fit()\n",
+          "\n",
+          "# Print the model summary\n",
+          "print(model_fit.summary())\n",
+          "\n",
+          "# Get the coefficients for the exogenous variables\n",
+          "meta_coef = model_fit.params['META']\n",
+          "goog_coef = model_fit.params['GOOG']\n",
+          "\n",
+          "# Print the coefficients\n",
+          "print(f\"META Coefficient: {meta_coef:.4f}\")\n",
+          "print(f\"GOOG Coefficient: {goog_coef:.4f}\")\n",
+          "\n",
+          "# Plot the actual and fitted values for TSLA\n",
+          "plt.plot(df['TSLA'], label='Actual')\n",
+          "plt.plot(model_fit.fittedvalues, label='Fitted')\n",
+          "plt.legend()\n",
+          "plt.title('TSLA Actual vs. Fitted Values')\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "3OHF-syjo0kL"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Get predictions\n",
+          "predictions = model_fit.get_prediction()\n",
+          "predicted_mean = predictions.predicted_mean\n",
+          "\n",
+          "# Evaluate the model\n",
+          "mse = mean_squared_error(df['TSLA'], predicted_mean)\n",
+          "rmse = mean_squared_error(df['TSLA'], predicted_mean, squared=False)\n",
+          "mae = mean_absolute_error(df['TSLA'], predicted_mean)\n",
+          "r2 = r2_score(df['TSLA'], predicted_mean)\n",
+          "\n",
+          "print(f\"Mean Squared Error (MSE): {mse:.4f}\")\n",
+          "print(f\"Root Mean Squared Error (RMSE): {rmse:.4f}\")\n",
+          "print(f\"Mean Absolute Error (MAE): {mae:.4f}\")\n",
+          "print(f\"R-squared (R2): {r2:.4f}\")\n",
+          "\n",
+          "# Plot the actual and predicted values\n",
+          "plt.plot(df['TSLA'], label='Actual')\n",
+          "plt.plot(predicted_mean, label='Predicted')\n",
+          "plt.legend()\n",
+          "plt.title('TSLA Actual vs Predicted Values')\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "UoxZ3RUcpwc0"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##END"
+        ],
+        "metadata": {
+          "id": "Tmi9T7hlhaIG"
+        }
+      }
+    ]
+  }
