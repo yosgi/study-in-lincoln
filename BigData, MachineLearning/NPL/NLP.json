@@ -1,0 +1,869 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "_cell_guid": "83708667-4fdc-1563-7b3a-06b6575d2865",
+        "id": "v6lD10h4vHgj"
+      },
+      "source": [
+        "# Natural Language Processing - Examples\n",
+        "\n",
+        "There are many python packages for NLP out there, but we can cover the important bases once we master a handful of them.\n",
+        "\n",
+        "   * NLTK Book: https://www.nltk.org/    \n",
+        "   * TextBlob : https://textblob.readthedocs.io/en/dev/index.html    \n",
+        "   * Spacy : https://spacy.io/\n",
+        "\n",
+        "In additional to these there are few other libraries such as Gensim and Stanford’s CoreNLP that can be explored as well."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "YkvZ0fZqvHgl"
+      },
+      "source": [
+        "<a id='1'></a>\n",
+        "# 1. Load libraries and Packages"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "c1NfkEeMvHgm"
+      },
+      "outputs": [],
+      "source": [
+        "!pip install nltk==3.4\n",
+        "!pip install textblob==0.15.3\n",
+        "!pip install gensim==3.8.2\n",
+        "!pip install -U SpaCy==2.2.0\n",
+        "!python -m spacy download en_core_web_lg"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "jqnikkLAvHgn"
+      },
+      "outputs": [],
+      "source": [
+        "import nltk\n",
+        "import nltk.data\n",
+        "nltk.download('punkt')\n",
+        "from textblob import TextBlob\n",
+        "import spacy\n",
+        "#Run the command python -m spacy download en_core_web_sm to download this\n",
+        "import en_core_web_lg\n",
+        "nlp = en_core_web_lg.load()\n",
+        "\n",
+        "#Other helper packages\n",
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "\n",
+        "#Download nltk data lobraries. All can be downloaded by using nltk.download('all')\n",
+        "nltk.download('punkt')\n",
+        "nltk.download('stopwords')\n",
+        "nltk.download('wordnet')\n",
+        "nltk.download('averaged_perceptron_tagger')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "NyKmEQ1kvHgo"
+      },
+      "outputs": [],
+      "source": [
+        "#Diable the warnings\n",
+        "import warnings\n",
+        "warnings.filterwarnings('ignore')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "p6Sbs3r8vHgp"
+      },
+      "source": [
+        "<a id='2'></a>\n",
+        "# 2. Preprocessing"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "YbenHGG5vHgp"
+      },
+      "source": [
+        "<a id='2.1'></a>\n",
+        "## 2.1. Tokenization\n",
+        "Tokenization is just the term used to describe the process of converting the normal text strings into a list of tokens i.e words that we actually want. Sentence tokenizer can be used to find the list of sentences and Word tokenizer can be used to find the list of words in strings."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "_cell_guid": "5d8fee34-f454-2642-8b06-ed719f0317e1",
+        "id": "V7wevGxnvHgp"
+      },
+      "outputs": [],
+      "source": [
+        "#Text to tokenize\n",
+        "text = \"This is a tokenize test\""
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "JJxjYu-JvHgq"
+      },
+      "source": [
+        "### NLTK"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "yvqEkwLGvHgq"
+      },
+      "source": [
+        "The NLTK data package includes a pre-trained Punkt tokenizer for English, which has alreayd been loaded before"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Oa9ZYKB1vHgq",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "f3353632-7d00-4053-ef03-6d2ff1e80712"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "['This', 'is', 'a', 'tokenize', 'test']"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 5
+        }
+      ],
+      "source": [
+        "from nltk.tokenize import word_tokenize\n",
+        "word_tokenize(text)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "KF_OOLTCvHgr"
+      },
+      "source": [
+        "### TextBlob"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "RKy1vFCwvHgr",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "4d097347-0702-4d1b-bb58-f2a1bb2cfa80"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "WordList(['This', 'is', 'a', 'tokenize', 'test'])"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 6
+        }
+      ],
+      "source": [
+        "TextBlob(text).words"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "gQ89daBbvHgr"
+      },
+      "source": [
+        "<a id='2.2'></a>\n",
+        "## 2.2. Stop Words Removal"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Xot8FCwfvHgs"
+      },
+      "source": [
+        "Sometimes, some extremely common words which would appear to be of little value in helping select documents matching a user need are excluded from the vocabulary entirely. These words are called stop words. The code for removing stop words using SpaCy library is shown below:"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "QHIWcZaJvHgs"
+      },
+      "source": [
+        "### NLTK"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "E1zRS_qivHgs"
+      },
+      "source": [
+        "We first load the language model and store it in the stop_words variable. The stopwords.words('english') is a set of default stop words for English language model in NLTK. Next, we simply iterate through each word in the input text and if the word exists in the stop word set of the NLTK language model, the word is removed."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "wa3TpK5NvHgs"
+      },
+      "outputs": [],
+      "source": [
+        "text = \"S&P and NASDAQ are the two most popular indices in US\""
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "YEMIQEuBvHgs"
+      },
+      "outputs": [],
+      "source": [
+        "from nltk.corpus import stopwords\n",
+        "from nltk.tokenize import word_tokenize\n",
+        "stop_words = set(stopwords.words('english'))\n",
+        "text_tokens = word_tokenize(text)\n",
+        "tokens_without_sw= [word for word in text_tokens if not word in stop_words]\n",
+        "\n",
+        "print(tokens_without_sw)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Ayd-h7-zvHgt"
+      },
+      "source": [
+        "As we can see some of the stop words such as \"are\", \"of\", \"most\" etc are removed from the sentence."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ggTVtRpnvHgt"
+      },
+      "source": [
+        "<a id='2.3'></a>\n",
+        "## 2.3. Stemming\n",
+        "Stemming is the process of reducing inflected (or sometimes derived) words to their stem, base or root form — generally a written word form. Example if we were to stem the following words: “Stems”, “Stemming”, “Stemmed”, “and Stemtization”, the result would be a single word “stem”."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "0mpwbN8xvHgt"
+      },
+      "outputs": [],
+      "source": [
+        "text = \"It's a Stemming testing\""
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "aYZXkaDYvHgt"
+      },
+      "source": [
+        "### NLTK"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Ovl71_XKvHgt"
+      },
+      "outputs": [],
+      "source": [
+        "parsed_text = word_tokenize(text)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "IYakQqkwvHgu"
+      },
+      "outputs": [],
+      "source": [
+        "# Initialize stemmer.\n",
+        "from nltk.stem.snowball import SnowballStemmer\n",
+        "stemmer = SnowballStemmer('english')\n",
+        "\n",
+        "# Stem each word.\n",
+        "[(word, stemmer.stem(word)) for i, word in enumerate(parsed_text)\n",
+        " if word.lower() != stemmer.stem(parsed_text[i])]"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "R5A8S9dWvHgu"
+      },
+      "source": [
+        "<a id='2.4'></a>\n",
+        "## 2.4. Lemmetization"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "HJo4WV2rvHgu"
+      },
+      "source": [
+        "### TextBlob"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "MKvFvfZSvHgu"
+      },
+      "outputs": [],
+      "source": [
+        "text = \"This world has a lot of faces \""
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "otKkxNdPvHgv"
+      },
+      "outputs": [],
+      "source": [
+        "from textblob import Word\n",
+        "parsed_data= TextBlob(text).words\n",
+        "parsed_data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "29aViF1XvHgv"
+      },
+      "outputs": [],
+      "source": [
+        "[(word, word.lemmatize()) for i, word in enumerate(parsed_data)\n",
+        " if word != parsed_data[i].lemmatize()]"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "JkkkW4eLvHgv"
+      },
+      "source": [
+        "<a id='2.5'></a>\n",
+        "## 2.5. POS Tagging"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "2GcwyUhgvHgv"
+      },
+      "source": [
+        "Sometimes, some extremely common words which would appear to be of little value in helping select documents matching a user need are excluded from the vocabulary entirely. These words are called stop words"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "mjHNNDynvHgw"
+      },
+      "outputs": [],
+      "source": [
+        "text = 'Google is looking at buying U.K. startup for $1 billion'"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "AWvetawMvHgw"
+      },
+      "source": [
+        "### TextBlob"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "6BMkETMIvHgw"
+      },
+      "outputs": [],
+      "source": [
+        "TextBlob(text).tags"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "This is a list of tokens with their corresponding Part-of-Speech (POS) tags.\n",
+        "\n",
+        "('Google', 'NNP'): Google is a proper noun.\n",
+        "\n",
+        "('is', 'VBZ'): is is a verb, third person singular present.\n",
+        "\n",
+        "('looking', 'VBG'): looking is a verb, gerund or present participle.\n",
+        "\n",
+        "('at', 'IN'): at is a preposition."
+      ],
+      "metadata": {
+        "id": "9M7dRR04NiRY"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "pviES3dXvHgx"
+      },
+      "source": [
+        "## Spacy- doing all at ones"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "UXH8bCzvvHgx"
+      },
+      "outputs": [],
+      "source": [
+        "text = 'Google is looking at buying U.K. startup for $1 billion'\n",
+        "doc = nlp(text)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "-ZRxtyWAvHgx"
+      },
+      "outputs": [],
+      "source": [
+        "pd.DataFrame([[t.text, t.is_stop, t.lemma_, t.pos_]\n",
+        "              for t in doc],\n",
+        "             columns=['Token', 'is_stop_word','lemma', 'POS'])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "vuLgDeZ1vHgy"
+      },
+      "source": [
+        "<a id='2.6'></a>\n",
+        "## 2.6. Name Entity Recognition"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "TFEyMJZevHgy"
+      },
+      "outputs": [],
+      "source": [
+        "text = 'Google is looking at buying U.K. startup for $1 billion'"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "rTX8yqJ0vHgz"
+      },
+      "source": [
+        "### SpaCy"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "2BxyBd-bvHgz"
+      },
+      "outputs": [],
+      "source": [
+        "for entity in nlp(text).ents:\n",
+        "    print(\"Entity: \", entity.text)\n",
+        "    print(\"Entity Type: %s | %s\" % (entity.label_, spacy.explain(entity.label_)))\n",
+        "    print(\"--\")"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "EaWJXDIzvHgz"
+      },
+      "outputs": [],
+      "source": [
+        "from spacy import displacy\n",
+        "displacy.render(nlp(text), style=\"ent\", jupyter = True)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "_cell_guid": "df6a4523-b385-69ee-c933-592826d81431",
+        "id": "R4w_1eOCvHg0"
+      },
+      "source": [
+        "<a id='3'></a>\n",
+        "# 3. Feature Representation\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fcIWXEOovHg0"
+      },
+      "source": [
+        "<a id='3.1'></a>\n",
+        "## 3.1. Bag of Words - Word Count"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lV2UTVX5vHg0"
+      },
+      "source": [
+        "In natural language processing, a common technique for extracting features from text is to place all of the words that occur in the text in a bucket. This aproach is called a bag of words model or BoW for short. It’s referred to as a “bag” of words because any information about the structure of the sentence is lost.The CountVectorizer from sklearn provides a simple way to both tokenize a collection of text documents and encode new documents using that vocabulary.The fit_transform\n",
+        "function learns the vocabulary from one or more documents and encodes each document in the word as a vector."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "PCI0FKQdvHg0"
+      },
+      "outputs": [],
+      "source": [
+        "sentences = [\n",
+        "'The stock price of google jumps on the earning data today',\n",
+        "'We really love FINC612', 'This semester is over'\n",
+        "]"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "42swB-4RvHg1"
+      },
+      "outputs": [],
+      "source": [
+        "from sklearn.feature_extraction.text import CountVectorizer\n",
+        "vectorizer = CountVectorizer()\n",
+        "print( vectorizer.fit_transform(sentences).todense() )\n",
+        "print( vectorizer.vocabulary_ )"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "yrpRVpBSvHg1"
+      },
+      "source": [
+        "<a id='3.2'></a>\n",
+        "## 3.2. TF-IDF"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "OnvNdIOEvHg1"
+      },
+      "source": [
+        "An alternative is to calculate word frequencies, and by far the most popular method is called TF-IDF. This is an acronym than stands for “Term Frequency – Inverse Document” Frequency which are the components of the resulting scores assigned to each word.\n",
+        "\n",
+        "* Term Frequency: This summarizes how often a given word appears within a document.\n",
+        "* Inverse Document Frequency: This downscales words that appear a lot across documents.\n",
+        "Without going into the math, TF-IDF are word frequency scores that try to highlight words that are more interesting, e.g. frequent in a document but not across documents.\n",
+        "\n",
+        "The TfidfVectorizer will tokenize documents, learn the vocabulary and inverse document frequency weightings, and allow you to encode new documents."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.feature_extraction.text import TfidfVectorizer\n",
+        "vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')\n",
+        "TFIDF = vectorizer.fit_transform(sentences)\n",
+        "print(vectorizer.get_feature_names_out()[-10:]) # Use get_feature_names_out() instead of get_feature_names()\n",
+        "print(TFIDF.shape)\n",
+        "print(TFIDF.toarray())"
+      ],
+      "metadata": {
+        "id": "xnfdkkdqPKwb"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "A7uw_3k1vHg6"
+      },
+      "source": [
+        "<a id='5'></a>\n",
+        "# 5 NLP Recipies"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "BscphbOWvHg6"
+      },
+      "source": [
+        "<a id='5.1'></a>\n",
+        "## 5.1. Sentiment Analysis"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "kdnNl9R6vHg7"
+      },
+      "source": [
+        "Sentiment analysis is contextual mining of text which identifies and extracts subjective information in source material, and helping us understand the sentiments behind a text."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1vuOhDtlvHg7"
+      },
+      "source": [
+        "With the help of Sentiment Analysis using Textblob the sentiment analysis can be performed in few lines of code. TextBlob provides polarity and subjectivity estimates for parsed documents using dictionaries provided by the Pattern library. The polarity defines the phase of emotions expressed in the analyzed sentence. Polarity alone is not enough to deal with complex text sentences. Subjectivity helps in determining personal states of the speaker including Emotions, Beliefs and opinions. It has values from 0 to 1 and a value closer to 0 shows the sentence is objective and vice versa.\n",
+        "\n",
+        "The texblob sentiment function is pretrained and map adjectives frequently found in movie reviews(source code: https://textblob.readthedocs.io/en/dev/_modules/textblob/en/sentiments.html) to sentiment polarity scores, ranging from -1 to +1 (negative ↔ positive) and a similar subjectivity score (objective ↔ subjective).\n",
+        "\n",
+        "The .sentiment attribute provides the average for each over the relevant tokens, whereas the .sentiment_assessments attribute lists the underlying values for each token."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "T9jv5nqDvHg7"
+      },
+      "outputs": [],
+      "source": [
+        "text1 = \"Bayer (OTCPK:BAYRY) started the week up 3.5% to €74/share in Frankfurt, touching their highest level in 14 months, after the U.S. government said a $25M glyphosate decision against the company should be reversed.\"\n",
+        "text2 = \"Apple declares poor in revenues\""
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "50KXP8T7vHg7"
+      },
+      "outputs": [],
+      "source": [
+        "TextBlob(text1).sentiment.polarity"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "HO9jFNYUvHg7"
+      },
+      "outputs": [],
+      "source": [
+        "TextBlob(text1).sentiment_assessments"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "QoK_21NLvHg8"
+      },
+      "outputs": [],
+      "source": [
+        "TextBlob(text2).sentiment.polarity"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "yyIZsEx5vHg8"
+      },
+      "outputs": [],
+      "source": [
+        "TextBlob(text2).sentiment_assessments"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "p50iuz-PvHg8"
+      },
+      "source": [
+        "<a id='5.2'></a>\n",
+        "## 5.2. Text Similarity\n",
+        "Finding similarity between text is at the heart of almost all text mining methods, for example, text classification, clustering, recommendation, and many more. In order to calculate similarity between two text snippets, the usual way is to convert the text into its corresponding vector representation, for which there are many methods like word embedding of text, and then calculate similarity or difference using different distance metrics such as cosine-similarity and euclidean distance applicable to vectors. The underlying vector representations come from a word embedding model which generally produces a dense multi-dimensional semantic representation of words (as shown in the example). Using this vector representation, we can calculate similarities and dissimilarities between tokens, named entities, noun phrases, sentences and documents. The example below shows how to calculate similarities between two documents and tokens."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "X60-57C1vHg8"
+      },
+      "outputs": [],
+      "source": [
+        "text1 = \"Barack Obama was the 44th president of the United States of America.\"\n",
+        "text2 = \"Donald Trump is the 45th president of the United States of America.\"\n",
+        "text3 = \"SpaCy and NLTK are two popular NLP libraries in Python community.\"\n",
+        "doc1 = nlp(text1); doc2 = nlp(text2); doc3 = nlp(text3);"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "KZTR3VlvvHg9"
+      },
+      "outputs": [],
+      "source": [
+        "def text_similarity(inp_obj1, inp_obj2):\n",
+        "    return inp_obj1.similarity(inp_obj2)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "uYqBy99AvHg9"
+      },
+      "outputs": [],
+      "source": [
+        "print(\"Similarity between doc1 and doc2: \", text_similarity(doc1, doc2))\n",
+        "print(\"Similarity between doc1 and doc3: \", text_similarity(doc1, doc3))"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "JqTKd90SvHg9"
+      },
+      "outputs": [],
+      "source": [
+        "def token_similarity(doc):\n",
+        "    for token1 in doc:\n",
+        "        for token2 in doc:\n",
+        "            print(\"Token 1: %s, Token 2: %s - Similarity: %f\" % (token1.text, token2.text, token1.similarity(token2)))\n",
+        "\n",
+        "doc4 = nlp(\"Apple orange cats\")\n",
+        "token_similarity(doc4)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#END\n",
+        "\n",
+        "---"
+      ],
+      "metadata": {
+        "id": "vPP0gXLqZc5b"
+      }
+    }
+  ],
+  "metadata": {
+    "_change_revision": 206,
+    "_is_fork": false,
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.7.3"
+    },
+    "colab": {
+      "provenance": [],
+      "collapsed_sections": [
+        "YkvZ0fZqvHgl",
+        "YbenHGG5vHgp",
+        "gQ89daBbvHgr",
+        "QHIWcZaJvHgs",
+        "ggTVtRpnvHgt",
+        "aYZXkaDYvHgt",
+        "R5A8S9dWvHgu",
+        "HJo4WV2rvHgu",
+        "JkkkW4eLvHgv",
+        "AWvetawMvHgw",
+        "pviES3dXvHgx",
+        "vuLgDeZ1vHgy",
+        "rTX8yqJ0vHgz",
+        "R4w_1eOCvHg0",
+        "fcIWXEOovHg0",
+        "yrpRVpBSvHg1",
+        "A7uw_3k1vHg6",
+        "BscphbOWvHg6",
+        "p50iuz-PvHg8"
+      ]
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}

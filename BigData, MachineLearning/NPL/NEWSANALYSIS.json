@@ -1,0 +1,310 @@
+{
+    "nbformat": 4,
+    "nbformat_minor": 0,
+    "metadata": {
+      "colab": {
+        "provenance": []
+      },
+      "kernelspec": {
+        "name": "python3",
+        "display_name": "Python 3"
+      },
+      "language_info": {
+        "name": "python"
+      }
+    },
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#**NEWS ANALYSIS**\n",
+          "\n",
+          "---\n",
+          "\n"
+        ],
+        "metadata": {
+          "id": "NO47ih2n6c8S"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##Example"
+        ],
+        "metadata": {
+          "id": "bYFC86PV6pjF"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Install required libraries\n",
+          "!pip install newspaper3k transformers vaderSentiment pandas\n",
+          "\n",
+          "# Importing necessary libraries\n",
+          "from newspaper import Article\n",
+          "from transformers import pipeline\n",
+          "from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer\n",
+          "import pandas as pd\n"
+        ],
+        "metadata": {
+          "id": "fox-fLrC2Y0Z"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Function to extract article content\n",
+          "def extract_article(url):\n",
+          "    article = Article(url)\n",
+          "    article.download()\n",
+          "    article.parse()\n",
+          "    return article.text\n",
+          "\n",
+          "# Function to summarize the article\n",
+          "def summarize_article(article_text):\n",
+          "    summarizer = pipeline(\"summarization\", model=\"facebook/bart-large-cnn\")\n",
+          "    summary = summarizer(article_text, max_length=130, min_length=30, do_sample=False)[0]['summary_text']\n",
+          "    return summary"
+        ],
+        "metadata": {
+          "id": "HitbOQja6w7I"
+        },
+        "execution_count": 2,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# List of article URLs\n",
+          "urls = [\n",
+          "    'https://www.cnbc.com/2024/09/19/stock-market-today-live-updates.html',\n",
+          "    'https://www.investopedia.com/dow-jones-today-09032024-8705310',\n",
+          "    'https://finance.yahoo.com/news/stock-market-today-sp-500-nasdaq-slip-as-sluggish-start-to-september-continues-200356910.html',\n",
+          "    'https://www.cnbc.com/2024/09/17/stock-market-today-live-updates.html',\n",
+          "    'https://www.cnbc.com/2024/09/15/stock-futures-are-little-changed-as-investors-await-major-fed-decision-live-updates.html'\n",
+          "]"
+        ],
+        "metadata": {
+          "id": "80moqJ6b60Fo"
+        },
+        "execution_count": 3,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###Sentiment Intensity Analyzer"
+        ],
+        "metadata": {
+          "id": "5I951iNE7iEG"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Function to perform sentiment analysis\n",
+          "def analyze_sentiment(text):\n",
+          "    analyzer = SentimentIntensityAnalyzer()\n",
+          "    sentiment_scores = analyzer.polarity_scores(text)\n",
+          "    if sentiment_scores['compound'] >= 0.05:\n",
+          "        sentiment_label = 'Positive'\n",
+          "    elif sentiment_scores['compound'] <= -0.05:\n",
+          "        sentiment_label = 'Negative'\n",
+          "    else:\n",
+          "        sentiment_label = 'Neutral'\n",
+          "    return sentiment_label, sentiment_scores  # Return both the label and the scores\n"
+        ],
+        "metadata": {
+          "id": "iyPgpBrS5USp"
+        },
+        "execution_count": 4,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# List to store results\n",
+          "results = []\n",
+          "\n",
+          "# Loop through the URLs\n",
+          "for url in urls:\n",
+          "    try:\n",
+          "        # Extract article content\n",
+          "        article_text = extract_article(url)\n",
+          "\n",
+          "        # Summarize the article\n",
+          "        summary = summarize_article(article_text)\n",
+          "\n",
+          "        # Perform sentiment analysis on the summary\n",
+          "        sentiment_label, sentiment_scores = analyze_sentiment(summary)\n",
+          "\n",
+          "        # Append the result (adding sentiment scores)\n",
+          "        results.append({\n",
+          "            \"URL\": url,\n",
+          "            \"Summary\": summary,\n",
+          "            \"Sentiment\": sentiment_label,\n",
+          "            \"Compound\": sentiment_scores['compound'],\n",
+          "            \"Positive\": sentiment_scores['pos'],\n",
+          "            \"Neutral\": sentiment_scores['neu'],\n",
+          "            \"Negative\": sentiment_scores['neg']\n",
+          "        })\n",
+          "\n",
+          "    except Exception as e:\n",
+          "        print(f\"Error processing {url}: {str(e)}\")\n",
+          "\n",
+          "# Convert the results to a DataFrame\n",
+          "df = pd.DataFrame(results)\n",
+          "\n",
+          "# Display the DataFrame\n",
+          "df"
+        ],
+        "metadata": {
+          "id": "sEa973x-5bBU"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Save DataFrame to an Excel file\n",
+          "file_name = 'sentiment_analyzer.xlsx'\n",
+          "df.to_excel(file_name, index=False)\n",
+          "\n",
+          "# Download the file in Google Colab\n",
+          "from google.colab import files\n",
+          "files.download(file_name)"
+        ],
+        "metadata": {
+          "id": "Cw0FFeJf5rUb"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###TextBlob"
+        ],
+        "metadata": {
+          "id": "tFG8wFde75Ew"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "!pip install textblob\n",
+          "from textblob import TextBlob"
+        ],
+        "metadata": {
+          "id": "bx7cfLz_7CIC"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Function to perform sentiment analysis with TextBlob\n",
+          "def analyze_sentiment(text):\n",
+          "    blob = TextBlob(text)\n",
+          "    polarity = blob.sentiment.polarity  # Polarity score\n",
+          "    subjectivity = blob.sentiment.subjectivity  # Subjectivity score\n",
+          "    # Determine sentiment label based on polarity\n",
+          "    if polarity > 0:\n",
+          "        sentiment_label = 'Positive'\n",
+          "    elif polarity < 0:\n",
+          "        sentiment_label = 'Negative'\n",
+          "    else:\n",
+          "        sentiment_label = 'Neutral'\n",
+          "    return sentiment_label, polarity, subjectivity"
+        ],
+        "metadata": {
+          "id": "9CItALVz7QC5"
+        },
+        "execution_count": 7,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# List to store results\n",
+          "results = []\n",
+          "\n",
+          "# Loop through the URLs\n",
+          "for url in urls:\n",
+          "    try:\n",
+          "        # Extract article content\n",
+          "        article_text = extract_article(url)\n",
+          "\n",
+          "        # Summarize the article\n",
+          "        summary = summarize_article(article_text)\n",
+          "\n",
+          "        # Perform sentiment analysis on the summary\n",
+          "        sentiment_label, polarity, subjectivity = analyze_sentiment(summary)\n",
+          "\n",
+          "        # Append the result (including polarity and subjectivity scores)\n",
+          "        results.append({\n",
+          "            \"URL\": url,\n",
+          "            \"Summary\": summary,\n",
+          "            \"Sentiment\": sentiment_label,\n",
+          "            \"Polarity\": polarity,\n",
+          "            \"Subjectivity\": subjectivity\n",
+          "        })\n",
+          "\n",
+          "    except Exception as e:\n",
+          "        print(f\"Error processing {url}: {str(e)}\")\n",
+          "\n",
+          "# Convert the results to a DataFrame\n",
+          "df = pd.DataFrame(results)\n"
+        ],
+        "metadata": {
+          "id": "Iml8_CMA7WgZ"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "df"
+        ],
+        "metadata": {
+          "id": "5_Vm4e1p8YG_"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Save DataFrame to an Excel file\n",
+          "file_name = 'sentiment_textblob.xlsx'\n",
+          "df.to_excel(file_name, index=False)\n",
+          "\n",
+          "# Download the file in Google Colab\n",
+          "from google.colab import files\n",
+          "files.download(file_name)"
+        ],
+        "metadata": {
+          "id": "qdgrwLxS7aGY"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#END\n",
+          "\n",
+          "---"
+        ],
+        "metadata": {
+          "id": "GAdAfdTO8cKQ"
+        }
+      }
+    ]
+  }

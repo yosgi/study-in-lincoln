@@ -1,0 +1,305 @@
+{
+    "nbformat": 4,
+    "nbformat_minor": 0,
+    "metadata": {
+      "colab": {
+        "provenance": [],
+        "collapsed_sections": [
+          "AB-c24Zn9W-9",
+          "JTduzY_JZuq3",
+          "zIz-G4uiZ-5J",
+          "45xeO-xkaC3c"
+        ]
+      },
+      "kernelspec": {
+        "name": "python3",
+        "display_name": "Python 3"
+      },
+      "language_info": {
+        "name": "python"
+      }
+    },
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#LSTM Examples"
+        ],
+        "metadata": {
+          "id": "GsYprmVseIIg"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##1: Install packages"
+        ],
+        "metadata": {
+          "id": "445tV3uC7twD"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "!pip install yfinance tensorflow scikit-learn matplotlib\n"
+        ],
+        "metadata": {
+          "id": "N-p-zkuo9SCC"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#2: Build and Train LSTM Models"
+        ],
+        "metadata": {
+          "id": "AB-c24Zn9W-9"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Imprort data\n",
+          "import yfinance as yf\n",
+          "import pandas as pd\n",
+          "import numpy as np\n",
+          "import matplotlib.pyplot as plt\n",
+          "from sklearn.preprocessing import MinMaxScaler\n",
+          "from tensorflow.keras.models import Sequential\n",
+          "from tensorflow.keras.layers import LSTM, Dense\n",
+          "from tensorflow.keras.optimizers import Adam\n",
+          "\n",
+          "# Download Amazon and S&P 500 data\n",
+          "start_date = '2018-01-01'\n",
+          "end_date = '2024-09-15'\n",
+          "\n",
+          "# Fetch data from Yahoo Finance\n",
+          "amzn_data = yf.download('AMZN', start=start_date, end=end_date)\n",
+          "sp500_data = yf.download('^GSPC', start=start_date, end=end_date)\n",
+          "\n",
+          "# Keep only 'Adj Close' prices\n",
+          "amzn_data = amzn_data[['Adj Close']].rename(columns={'Adj Close': 'AMZN'})\n",
+          "sp500_data = sp500_data[['Adj Close']].rename(columns={'Adj Close': 'SP500'})\n",
+          "\n",
+          "# Merge the two datasets on date\n",
+          "data = pd.concat([amzn_data, sp500_data], axis=1)\n",
+          "\n",
+          "# Dropping missing values\n",
+          "data.dropna(inplace=True)\n",
+          "\n",
+          "# Create lag features for S&P 500 (previous 10 days for richer context)\n",
+          "for i in range(1, 11):\n",
+          "    data[f'SP500_lag{i}'] = data['SP500'].shift(i)\n",
+          "\n",
+          "# Remove rows with NaN values after creating lags\n",
+          "data.dropna(inplace=True)\n",
+          "\n",
+          "# Define features (S&P 500 lags) and target (AMZN price)\n",
+          "X = data[[f'SP500_lag{i}' for i in range(1, 11)]]\n",
+          "y = data['AMZN']\n",
+          "\n",
+          "# Scaling the data\n",
+          "scaler_X = MinMaxScaler()\n",
+          "scaler_y = MinMaxScaler()\n",
+          "\n",
+          "X_scaled = scaler_X.fit_transform(X)\n",
+          "y_scaled = scaler_y.fit_transform(y.values.reshape(-1, 1))\n",
+          "\n",
+          "# Reshaping for LSTM [samples, time steps, features]\n",
+          "X_scaled = X_scaled.reshape((X_scaled.shape[0], 1, X_scaled.shape[1]))\n",
+          "\n",
+          "# Train-test split (80% training, 20% testing)\n",
+          "train_size = int(len(X_scaled) * 0.8)\n",
+          "X_train, X_test = X_scaled[:train_size], X_scaled[train_size:]\n",
+          "y_train, y_test = y_scaled[:train_size], y_scaled[train_size:]\n"
+        ],
+        "metadata": {
+          "id": "cM934zP3PATr"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##Building Model"
+        ],
+        "metadata": {
+          "id": "JTduzY_JZuq3"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from tensorflow.keras.layers import Dropout\n",
+          "model = Sequential()\n",
+          "model.add(LSTM(50, activation='relu', return_sequences=True, input_shape=(1, 10)))\n",
+          "model.add(Dropout(0.2))\n",
+          "model.add(LSTM(50, activation='relu'))\n",
+          "model.add(Dropout(0.2))\n",
+          "model.add(Dense(30))\n",
+          "\n",
+          "# Compile the model\n",
+          "#model.compile(optimizer=Adam(), loss='mse', metrics=['mae'])\n",
+          "model.compile(optimizer=Adam(learning_rate=0.001), loss='mse', metrics=['mae'])\n",
+          "\n",
+          "# Train the model\n",
+          "history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test), verbose=0)"
+        ],
+        "metadata": {
+          "id": "6O78BreSW4KU"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##Evaluation"
+        ],
+        "metadata": {
+          "id": "zIz-G4uiZ-5J"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "model.summary()"
+        ],
+        "metadata": {
+          "id": "mvQ1d9peSKvU"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# prompt: evaluate the model with mae, mse, rmse, r squared\n",
+          "from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score\n",
+          "import numpy as np\n",
+          "# y_pred contains the model's predictions on the test set\n",
+          "y_pred = model.predict(X_test)\n",
+          "\n",
+          "# Take the first prediction from y_pred to match the shape of y_test\n",
+          "y_pred = y_pred[:, 0] # Select only the first prediction for each sample\n",
+          "# Calculate MAE\n",
+          "mae = mean_absolute_error(y_test, y_pred)\n",
+          "# Calculate MSE\n",
+          "mse = mean_squared_error(y_test, y_pred)\n",
+          "# Calculate RMSE\n",
+          "rmse = np.sqrt(mse)\n",
+          "# Calculate R-squared\n",
+          "r2 = r2_score(y_test, y_pred)\n",
+          "\n",
+          "print(f\"Mean Absolute Error (MAE): {mae}\")\n",
+          "print(f\"Mean Squared Error (MSE): {mse}\")\n",
+          "print(f\"Root Mean Squared Error (RMSE): {rmse}\")\n",
+          "print(f\"R-squared (R2): {r2}\")"
+        ],
+        "metadata": {
+          "id": "imUx0ApsVNfP"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Plot learning curve\n",
+          "plt.plot(history.history['loss'], label='Train Loss')\n",
+          "plt.plot(history.history['val_loss'], label='Test Loss')\n",
+          "plt.legend()\n",
+          "plt.title('Model Learning Curve')\n",
+          "plt.show()\n"
+        ],
+        "metadata": {
+          "id": "9xxs7yrFVVea"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##Prediction"
+        ],
+        "metadata": {
+          "id": "45xeO-xkaC3c"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Predicting the next 30 days based on S&P 500 index\n",
+          "def predict_next_30_days(model, last_10_days_sp500, scaler_y):\n",
+          "    # Reshape last 10 days of SP500 for prediction\n",
+          "    input_seq = last_10_days_sp500.reshape((1, 1, last_10_days_sp500.shape[0]))\n",
+          "\n",
+          "    # Predict the next 30 days\n",
+          "    predicted_30_days = model.predict(input_seq)\n",
+          "\n",
+          "    # Rescale the predicted prices back to the original scale\n",
+          "    predictions_rescaled = scaler_y.inverse_transform(predicted_30_days)\n",
+          "    return predictions_rescaled\n",
+          "\n",
+          "# Get the last 10 days of the S&P 500 data from the test set\n",
+          "last_10_days_sp500_scaled = X_scaled[-1, 0, :]  # Last row of X_test, last 10 days\n",
+          "\n",
+          "# Predict the next 30 days for Amazon using the last S&P 500 values\n",
+          "predicted_30_days = predict_next_30_days(model, last_10_days_sp500_scaled, scaler_y)\n",
+          "\n",
+          "# Plot the predicted trend\n",
+          "plt.figure(figsize=(10, 6))\n",
+          "plt.plot(np.arange(0, 30), predicted_30_days.flatten(), label='Predicted AMZN Prices (Next 30 Days)', color='red')\n",
+          "plt.title('Predicted Trend of AMZN Stock Prices (Next 30 Days)')\n",
+          "plt.xlabel('Days')\n",
+          "plt.ylabel('Price')\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "AWrZux-2PDaz"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Rescale y_test to original scale for comparison\n",
+          "y_test_rescaled = scaler_y.inverse_transform(y_test)\n",
+          "\n",
+          "# Prepare data for plotting\n",
+          "# Plot the actual prices (the last 100 days) and the predicted next 30 days\n",
+          "plt.figure(figsize=(12, 8))\n",
+          "plt.plot(np.arange(0, len(y_test_rescaled[-100:])), y_test_rescaled[-100:], label='Actual AMZN Prices', color='blue')\n",
+          "plt.plot(np.arange(len(y_test_rescaled[-100:]), len(y_test_rescaled[-100:]) + 30), predicted_30_days.flatten(), label='Predicted AMZN Prices (Next 30 Days)', color='red')\n",
+          "plt.title('Amazon Stock Prices: Actual vs Predicted (Next 30 Days)')\n",
+          "plt.xlabel('Days')\n",
+          "plt.ylabel('Price')\n",
+          "plt.legend()\n",
+          "plt.grid(True)\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "VFyHGJWQQu9z"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#END\n",
+          "\n",
+          "---\n"
+        ],
+        "metadata": {
+          "id": "U5Xo2vCwPedK"
+        }
+      }
+    ]
+  }
