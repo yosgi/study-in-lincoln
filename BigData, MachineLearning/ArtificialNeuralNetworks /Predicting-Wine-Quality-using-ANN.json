@@ -1,0 +1,665 @@
+{
+    "nbformat": 4,
+    "nbformat_minor": 0,
+    "metadata": {
+      "colab": {
+        "provenance": [],
+        "collapsed_sections": [
+          "tQeNGhFkDGwB",
+          "D2Ih-ap3uDS_"
+        ]
+      },
+      "kernelspec": {
+        "name": "python3",
+        "display_name": "Python 3"
+      },
+      "accelerator": "GPU"
+    },
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "source": [
+          "# Predicting Wine Quality using ANN.\n",
+          "(Any ONE of ANN, RNN, LSTM)"
+        ],
+        "metadata": {
+          "id": "ozSTLi6kmU9m"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##1-Loading packages and data"
+        ],
+        "metadata": {
+          "id": "gBUgSLqomaoD"
+        }
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "B2xofiZXGMyY"
+        },
+        "source": [
+          "import tensorflow as tf\n",
+          "# import required packages\n",
+          "import pandas as pd\n",
+          "import requests\n",
+          "import io\n",
+          "import matplotlib.pyplot as plt"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from google.colab import files\n",
+          "#files.upload()"
+        ],
+        "metadata": {
+          "id": "WSeLM8QucISJ"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import io\n",
+          "uploaded = files.upload()\n",
+          "dataset = pd.read_csv(io.BytesIO(uploaded['winequality-white.csv']))"
+        ],
+        "metadata": {
+          "id": "gXG3AjIjhEK4"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "execution_count": null,
+        "metadata": {
+          "id": "WbierMcnvYK3"
+        },
+        "outputs": [],
+        "source": [
+          "# load dataset\n",
+          "dataset = pd.read_csv('winequality-white.csv', sep=';')"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "HaGd7JXkK_K3"
+        },
+        "source": [
+          "# display last few records\n",
+          "dataset.tail()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "DE9_vpB8M5PK"
+        },
+        "source": [
+          "## 2-Data Preprocessing"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "OJB3kmULMx5p"
+        },
+        "source": [
+          "# extracting features and labels\n",
+          "x = dataset.drop('quality' , axis = 1)\n",
+          "y = dataset['quality']"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "JZI9lVSWMkqX"
+        },
+        "source": [
+          "# creating training, validation and testing datasets\n",
+          "from sklearn.model_selection import train_test_split\n",
+          "x_train_1 , x_test , y_train_1 , y_test = train_test_split(x , y , test_size = 0.15 , random_state = 0)\n",
+          "x_train , x_val , y_train , y_val = train_test_split(x_train_1 , y_train_1 , test_size = 0.05 , random_state = 0)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "q-hMnlLvx1vm"
+        },
+        "source": [
+          "# scaling data\n",
+          "from sklearn.preprocessing import StandardScaler\n",
+          "sc_x = StandardScaler()\n",
+          "# Here sc_x is used to understand the structure of training dataset ,\n",
+          "# applying formulas and then transforming the training dataset.\n",
+          "x_train_new = sc_x.fit_transform(x_train)\n",
+          "# Here we don't need to fit it again.\n",
+          "x_test_new = sc_x.transform(x_test)\n",
+          "x_val_new = sc_x.transform(x_val)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "F-pINDPag71y"
+        },
+        "source": [
+          "##3- Metrics visualization function"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "4sgHDtcXgxPH"
+        },
+        "source": [
+          "import matplotlib.pyplot as plt\n",
+          "epoch = 30\n",
+          "def plot_learningCurve(history):\n",
+          "  # Plot training & validation accuracy values\n",
+          "  epoch_range = range(1, epoch+1)\n",
+          "  #plotting the mae vs epoch of training set\n",
+          "  plt.plot(epoch_range, history.history['mae'])\n",
+          "  #plotting the val_mae vs epoch of the validation dataset.\n",
+          "  plt.plot(epoch_range, history.history['val_mae'])\n",
+          "  plt.ylim([0, 2])\n",
+          "  plt.title('Model mae')\n",
+          "  plt.ylabel('mae')\n",
+          "  plt.xlabel('Epoch')\n",
+          "  plt.legend(['Train', 'Val'], loc='upper right')\n",
+          "  plt.show()\n",
+          "\n",
+          "  print(\"--------------------------------------------------------\")\n",
+          "\n",
+          "  # Plot training & validation loss values\n",
+          "  plt.plot(epoch_range, history.history['loss'])\n",
+          "  plt.plot(epoch_range, history.history['val_loss'])\n",
+          "  plt.ylim([0, 4])\n",
+          "  plt.title('Model loss')\n",
+          "  plt.ylabel('Loss')\n",
+          "  plt.xlabel('Epoch')\n",
+          "  plt.legend(['Train', 'Val'], loc='upper right')\n",
+          "  plt.show()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##4-Models"
+        ],
+        "metadata": {
+          "id": "-C-3OzSgmxdQ"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "kSChszvU4gNL"
+        },
+        "source": [
+          "###4.1- Small Model"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "small_model = tf.keras.Sequential([\n",
+          "    tf.keras.layers.Dense(16 , activation = 'relu' , input_dim = 11),\n",
+          "    tf.keras.layers.Dense(1)\n",
+          "])"
+        ],
+        "metadata": {
+          "id": "R831m4m51sTH"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "small_model.compile(optimizer = 'adam' , loss = 'mse' , metrics = ['mae'])\n",
+          "history_small = small_model.fit(x_train_new, y_train ,\n",
+          "                                batch_size = 32,\n",
+          "                                epochs = 30, verbose = 0,\n",
+          "                                validation_data = (x_val_new , y_val))"
+        ],
+        "metadata": {
+          "id": "Damk0jjf10w5"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "tQeNGhFkDGwB"
+        },
+        "source": [
+          "Small Model Evaluation Metrics"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "DzvNm-5iBw_O"
+        },
+        "source": [
+          "plot_learningCurve(history_small)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "ruyXKQ2gL_QH"
+        },
+        "source": [
+          "s_test_loss , s_test_mae = small_model.evaluate(x_test_new , y_test , batch_size=32 , verbose=1)\n",
+          "print(\"small model test_loss : {}\".format(s_test_loss))\n",
+          "print(\"small model test_mae : {} \".format(s_test_mae))"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "sqT57OjiQI0c"
+        },
+        "source": [
+          "import numpy as np\n",
+          "unseen_data = np.array([[6.0 , 0.28 , 0.22 , 12.15 , 0.048 , 42.0 , 163.0 , 0.99570 , 3.20 , 0.46 , 10.1]])"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "7uMBo-lKP7VK"
+        },
+        "source": [
+          "y_small = small_model.predict(sc_x.transform(unseen_data))\n",
+          "print (\"Wine quality on unseen data (small model): \", y_small[0][0])"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "OR984T5gAJHc"
+        },
+        "source": [
+          "small_model.summary()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "D2Ih-ap3uDS_"
+        },
+        "source": [
+          "###4.2- Medium Model"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "medium_model = tf.keras.Sequential([\n",
+          "                               tf.keras.layers.Dense(64 , activation = 'relu' ,\n",
+          "                                                     input_dim = 11),\n",
+          "                               tf.keras.layers.Dense(64 , activation = 'relu'),\n",
+          "                               tf.keras.layers.Dense(64 , activation = 'relu'),\n",
+          "                               tf.keras.layers.Dense(1)\n",
+          "])"
+        ],
+        "metadata": {
+          "id": "JaVJ3F_j2rQz"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "medium_model.compile(loss = 'mse' , optimizer= 'adam' , metrics = ['mae'])\n",
+          "history_medium = medium_model.fit(x_train_new , y_train , batch_size=32,\n",
+          "                                  epochs = 30, verbose = 1 ,\n",
+          "                                  validation_data= (x_val_new , y_val))"
+        ],
+        "metadata": {
+          "id": "N8Sa23vp2zWh"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "30furuhdw0HJ"
+        },
+        "source": [
+          "plot_learningCurve(history_medium)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "nDZL8ss9yAVs"
+        },
+        "source": [
+          "m_test_loss , m_test_mae = medium_model.evaluate(x_test_new , y_test , batch_size=32 , verbose = 1)\n",
+          "print(\"medium model test_loss : {}\".format(m_test_loss))\n",
+          "print(\"medium model test_mae : {}\".format(m_test_mae))"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "H970sdpYyxH9"
+        },
+        "source": [
+          "y_medium = medium_model.predict(sc_x.transform(unseen_data))\n",
+          "print (\"Wine quality on unseen data (medium model): \", y_medium[0][0])"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "s4oz9jOTAYwk"
+        },
+        "source": [
+          "medium_model.summary()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "OPikplYF0dTe"
+        },
+        "source": [
+          "###4.3- Large Model"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "large_model = tf.keras.Sequential([\n",
+          "                               tf.keras.layers.Dense(128 , activation = 'relu' ,\n",
+          "                                                     input_dim = 11),\n",
+          "                               tf.keras.layers.Dense(128 , activation = 'relu'),\n",
+          "                               tf.keras.layers.Dense(128 , activation = 'relu'),\n",
+          "                               tf.keras.layers.Dense(128 , activation = 'relu'),\n",
+          "                               tf.keras.layers.Dense(1)\n",
+          "])"
+        ],
+        "metadata": {
+          "id": "Eb1je6vK3JXu"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "large_model.compile(loss = 'mse' , optimizer= 'adam' , metrics = ['mae'])\n",
+          "history_large = large_model.fit(x_train_new , y_train , batch_size=32, epochs = 30,verbose = 1 , validation_data= (x_val_new , y_val))"
+        ],
+        "metadata": {
+          "id": "JeAfxBWY3M6X"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "yISIdl8h1B2X"
+        },
+        "source": [
+          "plot_learningCurve(history_large)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "jXZqJZZ112Bk"
+        },
+        "source": [
+          "l_test_loss , l_test_mae = large_model.evaluate(x_test_new , y_test , batch_size = 32 , verbose = 1)\n",
+          "print(\"large model test_loss : {}\".format(l_test_loss))\n",
+          "print(\"large model test_mae : {}\".format(l_test_mae))"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "-mFrYan92YkH"
+        },
+        "source": [
+          "y_large = large_model.predict(sc_x.transform(np.array([[6.0 , 0.28 , 0.22 , 12.15 , 0.048 , 42.0 , 163.0 , 0.99570 , 3.20 , 0.46 , 10.1]])))\n",
+          "print (\"Wine quality on unseen data (large model): \", y_large[0][0])"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "JX3A6BfeAfgd"
+        },
+        "source": [
+          "large_model.summary()"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "q07PoavT5rzv"
+        },
+        "source": [
+          "##5- Reducing Overfitting"
+        ]
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "####5.1- Large Model"
+        ],
+        "metadata": {
+          "id": "iiNPV8aH9B8a"
+        }
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "5r_65YkBguTe"
+        },
+        "source": [
+          "large_model_overfit = tf.keras.Sequential([\n",
+          "                               tf.keras.layers.Dense(128 , activation = 'relu' ,\n",
+          "                                                     input_dim = 11),\n",
+          "                               tf.keras.layers.Dropout(0.4),\n",
+          "                               tf.keras.layers.Dense(128 , activation = 'relu'),\n",
+          "                               tf.keras.layers.Dropout(0.3),\n",
+          "                               tf.keras.layers.Dense(128 , activation = 'relu'),\n",
+          "                               tf.keras.layers.Dropout(0.2),\n",
+          "                               tf.keras.layers.Dense(128 , activation = 'relu'),\n",
+          "                               tf.keras.layers.Dense(1)])\n",
+          "large_model_overfit.compile(loss = 'mse' , optimizer= 'adam' , metrics = ['mae'])\n",
+          "history_large_overfit = large_model_overfit.fit(x_train_new , y_train , batch_size=32, epochs = 30,verbose = 0 , validation_data= (x_val_new , y_val))\n",
+          "plot_learningCurve(history_large_overfit)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "l_test_loss , l_test_mae = large_model_overfit.evaluate(x_test_new , y_test , batch_size = 32 , verbose = 1)\n",
+          "print(\"large model test_loss : {}\".format(l_test_loss))\n",
+          "print(\"large model test_mae : {}\".format(l_test_mae))"
+        ],
+        "metadata": {
+          "id": "9MUpQsmn4bHw"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [],
+        "metadata": {
+          "id": "haM6jqIS9Imv"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "####5.2- Small Model"
+        ],
+        "metadata": {
+          "id": "aYjcqLvV9I1s"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "metadata": {
+          "id": "YlT6w0H1kkhv"
+        },
+        "source": [
+          "Training Optimization in case of Small Model"
+        ]
+      },
+      {
+        "cell_type": "code",
+        "metadata": {
+          "id": "iMoisKiCki5P"
+        },
+        "source": [
+          "model_small_overfit = tf.keras.Sequential([\n",
+          "                tf.keras.layers.Dense(16 ,\n",
+          "                    activation = 'relu' ,\n",
+          "                    input_dim = 11),\n",
+          "              tf.keras.layers.Dense(1)])\n",
+          "optimizer = tf.keras.optimizers.RMSprop(0.001)\n",
+          "model_small_overfit.compile(loss = 'mse' , optimizer = optimizer , metrics = ['mae'])\n",
+          "history_small_overfit = model_small_overfit.fit(x_train_new , y_train , batch_size=32,\n",
+          "                        epochs = 30, verbose = 0 ,\n",
+          "                        validation_data= (x_val_new , y_val))\n",
+          "plot_learningCurve(history_small_overfit)"
+        ],
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "l_test_loss , l_test_mae = model_small_overfit.evaluate(x_test_new , y_test , batch_size = 32 , verbose = 1)\n",
+          "print(\"large model test_loss : {}\".format(l_test_loss))\n",
+          "print(\"large model test_mae : {}\".format(l_test_mae))"
+        ],
+        "metadata": {
+          "id": "DzLVwKK75CSy"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "####5.3- Prediction"
+        ],
+        "metadata": {
+          "id": "5fJUixQA9W6s"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "#Compare to small_model\n",
+          "y_small = model_small_overfit.predict(sc_x.transform(unseen_data))\n",
+          "print (\"Wine quality on unseen data (small model): \", y_small[0][0])"
+        ],
+        "metadata": {
+          "id": "nt0_p5fo5-h1"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "#Compare to large_model\n",
+          "y_large1 = large_model_overfit.predict(sc_x.transform(unseen_data))\n",
+          "print (\"Wine quality on unseen data (small model): \", y_large1[0][0])"
+        ],
+        "metadata": {
+          "id": "3wGTt1cp6GaV"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "#Compare to large_model\n",
+          "y_large2 = large_model_overfit.predict(sc_x.transform(np.array([[6.0 , 0.28 , 0.22 , 12.15 , 0.048 , 42.0 , 163.0 , 0.99570 , 3.20 , 0.46 , 10.1]])))\n",
+          "print (\"Wine quality on unseen data (large model): \", y_large2[0][0])"
+        ],
+        "metadata": {
+          "id": "JutQc5hS6xsc"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#END\n",
+          "\n",
+          "---\n"
+        ],
+        "metadata": {
+          "id": "4J_hy7Ca8AO8"
+        }
+      }
+    ]
+  }

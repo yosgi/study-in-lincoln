@@ -1,0 +1,779 @@
+{
+    "nbformat": 4,
+    "nbformat_minor": 0,
+    "metadata": {
+      "colab": {
+        "provenance": [],
+        "collapsed_sections": [
+          "kRb6rc98sdXf",
+          "MwNnT0Ihsff5",
+          "DFNbwFY9sjqg"
+        ]
+      },
+      "kernelspec": {
+        "name": "python3",
+        "display_name": "Python 3"
+      },
+      "language_info": {
+        "name": "python"
+      }
+    },
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#ANN Models"
+        ],
+        "metadata": {
+          "id": "wZEexVNfgk7-"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##1: Install Necessary Libraries"
+        ],
+        "metadata": {
+          "id": "kRb6rc98sdXf"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "!pip install yfinance pandas scikit-learn tensorflow matplotlib\n"
+        ],
+        "metadata": {
+          "id": "eF6hU5OQnnfb"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##2: Download Data from Yahoo Finance\n"
+        ],
+        "metadata": {
+          "id": "MwNnT0Ihsff5"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import yfinance as yf\n",
+          "import pandas as pd\n",
+          "\n",
+          "# Define tickers and date range\n",
+          "start_date = '2018-01-01'\n",
+          "end_date = '2024-09-15'\n",
+          "\n",
+          "# Download stock prices\n",
+          "amzn = yf.download('AMZN', start=start_date, end=end_date)\n",
+          "sp500 = yf.download('^GSPC', start=start_date, end=end_date)\n",
+          "\n",
+          "# For CPI.AT Company\n",
+          "cpi = yf.download('CPI.AT', start=start_date, end=end_date)\n",
+          "\n",
+          "# Keep only the adjusted close for each\n",
+          "amzn = amzn[['Adj Close']].rename(columns={'Adj Close': 'AMZN'})\n",
+          "sp500 = sp500[['Adj Close']].rename(columns={'Adj Close': 'SP500'})\n",
+          "cpi = cpi[['Adj Close']].rename(columns={'Adj Close': 'CPI'})\n",
+          "\n",
+          "# Merge the datasets on the date\n",
+          "data = amzn.join([sp500, cpi], how='inner')\n",
+          "data.dropna(inplace=True)\n",
+          "data.head()\n"
+        ],
+        "metadata": {
+          "id": "-8u0C3nCshtr"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##3: Create Lags for AMZN, S&P 500, and Use CPI\n"
+        ],
+        "metadata": {
+          "id": "DFNbwFY9sjqg"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Create lags for AMZN and SP500\n",
+          "data['AMZN_lag1'] = data['AMZN'].shift(1)\n",
+          "data['AMZN_lag2'] = data['AMZN'].shift(2)\n",
+          "data['AMZN_lag3'] = data['AMZN'].shift(3)\n",
+          "data['SP500_lag1'] = data['SP500'].shift(1)\n",
+          "\n",
+          "# Drop rows with missing values due to lagging\n",
+          "data.dropna(inplace=True)\n",
+          "\n",
+          "# Define features (X) and target (y)\n",
+          "X = data[['AMZN_lag1', 'AMZN_lag2', 'AMZN_lag3', 'SP500_lag1', 'CPI']]\n",
+          "y = data['AMZN']\n"
+        ],
+        "metadata": {
+          "id": "T5ZbKsxmsmqz"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##4: Split Data into Train and Test Sets"
+        ],
+        "metadata": {
+          "id": "4wgvHK1ys13W"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "from sklearn.model_selection import train_test_split\n",
+          "# Split the data\n",
+          "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)\n"
+        ],
+        "metadata": {
+          "id": "Faq9c6vds2TP"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "#MinMaxScaler\n",
+          "from sklearn.preprocessing import MinMaxScaler\n",
+          "scaler = MinMaxScaler()\n",
+          "X_train_scaled = scaler.fit_transform(X_train)\n",
+          "X_test_scaled = scaler.transform(X_test)"
+        ],
+        "metadata": {
+          "id": "sZFyIlX1hXhB"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##5: Build and Train the ANN Models"
+        ],
+        "metadata": {
+          "id": "StBY0xU1s7z_"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###Model 1: 2 Layers"
+        ],
+        "metadata": {
+          "id": "PyFv706-h12K"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "https://keras.io/api/layers/core_layers/dense/"
+        ],
+        "metadata": {
+          "id": "kHZqPuL9X8pf"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import tensorflow as tf\n",
+          "from tensorflow.keras.models import Sequential\n",
+          "from tensorflow.keras.layers import Dense\n",
+          "import matplotlib.pyplot as plt\n",
+          "\n",
+          "# Model 1: 2 layers\n",
+          "model1 = Sequential([\n",
+          "    Dense(16, activation='relu', input_dim=X_train.shape[1]),\n",
+          "    Dense(16, activation='relu'),\n",
+          "    Dense(1)  # Output layer\n",
+          "])\n",
+          "\n",
+          "# Compile model\n",
+          "model1.compile(optimizer='adam', loss='mse', metrics=['mae'])\n",
+          "\n",
+          "# Train model\n",
+          "history1 = model1.fit(X_train_scaled, y_train, epochs=100, validation_data=(X_test_scaled, y_test), verbose=1, batch_size=32)\n"
+        ],
+        "metadata": {
+          "id": "hMWr5ag_s8YG"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Summary of the model\n",
+          "model1.summary()\n",
+          "\n",
+          "# Plot learning curve\n",
+          "plt.plot(history1.history['mae'], label='Train MAE')\n",
+          "plt.plot(history1.history['val_mae'], label='Test MAE')\n",
+          "plt.title('Model 1: Learning Curve')\n",
+          "plt.xlabel('Epochs')\n",
+          "plt.ylabel('MAE')\n",
+          "plt.legend()\n",
+          "plt.show()\n",
+          "\n",
+          "# Evaluate the model\n",
+          "loss, mae = model1.evaluate(X_test_scaled, y_test)\n",
+          "print(f'Model 1 - Test MAE: {mae}')\n",
+          "\n",
+          "# Predict and plot actual vs. predicted\n",
+          "y_pred1 = model1.predict(X_test_scaled)\n",
+          "plt.plot(y_test.values, label='Actual')\n",
+          "plt.plot(y_pred1, label='Predicted')\n",
+          "plt.title('Model 1: Actual vs Predicted')\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "RRj7SDv9vSTn"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###Model 2: 4 Layers"
+        ],
+        "metadata": {
+          "id": "DXCLlYOKs-ZW"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Model 2: 4 layers\n",
+          "model2 = Sequential([\n",
+          "    Dense(64, activation='relu', input_dim=X_train.shape[1]),\n",
+          "    Dense(64, activation='relu'),\n",
+          "    Dense(64, activation='relu'),\n",
+          "    Dense(64, activation='relu'),\n",
+          "    Dense(1)\n",
+          "])\n",
+          "\n",
+          "# Compile model\n",
+          "model2.compile(optimizer='adam', loss='mse', metrics=['mae'])\n",
+          "\n",
+          "# Train model\n",
+          "history2 = model2.fit(X_train_scaled, y_train, epochs=100, validation_data=(X_test_scaled, y_test), verbose=1, batch_size=32)\n"
+        ],
+        "metadata": {
+          "id": "xA_za8PetBVe"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Summary of the model\n",
+          "model2.summary()\n",
+          "\n",
+          "# Plot learning curve\n",
+          "plt.plot(history2.history['mae'], label='Train MAE')\n",
+          "plt.plot(history2.history['val_mae'], label='Test MAE')\n",
+          "plt.title('Model 2: Learning Curve')\n",
+          "plt.xlabel('Epochs')\n",
+          "plt.ylabel('MAE')\n",
+          "plt.legend()\n",
+          "plt.show()\n",
+          "\n",
+          "# Evaluate the model\n",
+          "loss, mae = model2.evaluate(X_test_scaled, y_test)\n",
+          "print(f'Model 2 - Test MAE: {mae}')\n",
+          "\n",
+          "# Predict and plot actual vs. predicted\n",
+          "y_pred2 = model2.predict(X_test_scaled)\n",
+          "plt.plot(y_test.values, label='Actual')\n",
+          "plt.plot(y_pred2, label='Predicted')\n",
+          "plt.title('Model 2: Actual vs Predicted')\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "g2gAkgh-woD8"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "###Model 3: 6 Layers"
+        ],
+        "metadata": {
+          "id": "qwSGWxxstDGE"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Model 3: 6 layers\n",
+          "model3 = Sequential([\n",
+          "    Dense(128, activation='relu', input_dim=X_train.shape[1]),\n",
+          "    Dense(128, activation='relu'),\n",
+          "    Dense(128, activation='relu'),\n",
+          "    Dense(128, activation='relu'),\n",
+          "    Dense(128, activation='relu'),\n",
+          "    Dense(128, activation='relu'),\n",
+          "    Dense(1)\n",
+          "])\n",
+          "\n",
+          "# Compile model\n",
+          "model3.compile(optimizer='adam', loss='mse', metrics=['mae'])\n",
+          "\n",
+          "# Train model\n",
+          "history3 = model3.fit(X_train_scaled, y_train, epochs=100, validation_data=(X_test_scaled, y_test), verbose=1, batch_size=32 )\n"
+        ],
+        "metadata": {
+          "id": "zL0B_OHZtGjS"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Summary of the model\n",
+          "model3.summary()\n"
+        ],
+        "metadata": {
+          "id": "dSO4uSsXxPVB"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Plot learning curve\n",
+          "plt.plot(history3.history['mae'], label='Train MAE')\n",
+          "plt.plot(history3.history['val_mae'], label='Test MAE')\n",
+          "plt.title('Model 3: Learning Curve')\n",
+          "plt.xlabel('Epochs')\n",
+          "plt.ylabel('MAE')\n",
+          "plt.legend()\n",
+          "plt.show()\n",
+          "\n",
+          "# Evaluate the model\n",
+          "loss, mae = model3.evaluate(X_test_scaled, y_test)\n",
+          "print(f'Model 3 - Test MAE: {mae}')\n",
+          "\n",
+          "# Predict and plot actual vs. predicted\n",
+          "y_pred3 = model3.predict(X_test_scaled)\n",
+          "plt.plot(y_test.values, label='Actual')\n",
+          "plt.plot(y_pred3, label='Predicted')\n",
+          "plt.title('Model 3: Actual vs Predicted')\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "yVh6pNhaxUH7"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##6-Evaluate and Compare Metrics"
+        ],
+        "metadata": {
+          "id": "tB84PVpmy_Ns"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Evaluate each model and store MAE values\n",
+          "loss1, mae1 = model1.evaluate(X_test_scaled, y_test, verbose=0)\n",
+          "loss2, mae2 = model2.evaluate(X_test_scaled, y_test, verbose=0)\n",
+          "loss3, mae3 = model3.evaluate(X_test_scaled, y_test, verbose=0)\n",
+          "\n",
+          "print(f\"Model 1 - Test MAE: {mae1}\")\n",
+          "print(f\"Model 2 - Test MAE: {mae2}\")\n",
+          "print(f\"Model 3 - Test MAE: {mae3}\")\n",
+          "\n",
+          "# Compare models based on MAE\n",
+          "best_model = None\n",
+          "if mae1 < mae2 and mae1 < mae3:\n",
+          "    best_model = \"Model 1\"\n",
+          "elif mae2 < mae1 and mae2 < mae3:\n",
+          "    best_model = \"Model 2\"\n",
+          "else:\n",
+          "    best_model = \"Model 3\"\n",
+          "\n",
+          "print(f\"The best model based on MAE is: {best_model}\")\n"
+        ],
+        "metadata": {
+          "id": "QVTboLuNyupa"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "Plot Actual vs. Predicted"
+        ],
+        "metadata": {
+          "id": "3NjpJRppzIF1"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import matplotlib.pyplot as plt\n",
+          "\n",
+          "# Plot Model 1\n",
+          "plt.figure(figsize=(10, 6))\n",
+          "plt.plot(y_test.values, label='Actual AMZN', color='blue')\n",
+          "plt.plot(y_pred1, label='Model 1 Predicted AMZN', color='red')\n",
+          "plt.title('Model 1: Actual vs Predicted')\n",
+          "plt.legend()\n",
+          "plt.show()\n",
+          "\n",
+          "# Plot Model 2\n",
+          "plt.figure(figsize=(10, 6))\n",
+          "plt.plot(y_test.values, label='Actual AMZN', color='blue')\n",
+          "plt.plot(y_pred2, label='Model 2 Predicted AMZN', color='green')\n",
+          "plt.title('Model 2: Actual vs Predicted')\n",
+          "plt.legend()\n",
+          "plt.show()\n",
+          "\n",
+          "# Plot Model 3\n",
+          "plt.figure(figsize=(10, 6))\n",
+          "plt.plot(y_test.values, label='Actual AMZN', color='blue')\n",
+          "plt.plot(y_pred3, label='Model 3 Predicted AMZN', color='purple')\n",
+          "plt.title('Model 3: Actual vs Predicted')\n",
+          "plt.legend()\n",
+          "plt.show()\n"
+        ],
+        "metadata": {
+          "id": "J1nAZksZzIns"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##7-Techniques to Reduce Overfitting:"
+        ],
+        "metadata": {
+          "id": "vEKlX7aW0jb0"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "####7-1 Kernel only"
+        ],
+        "metadata": {
+          "id": "LqkeNxSe11t6"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import tensorflow as tf\n",
+          "from tensorflow.keras.models import Sequential\n",
+          "from tensorflow.keras.layers import Dense, Dropout, BatchNormalization\n",
+          "from tensorflow.keras.regularizers import l2\n",
+          "from tensorflow.keras.callbacks import EarlyStopping\n",
+          "\n",
+          "# Define Model 3 with regularization, dropout, and batch normalization\n",
+          "def build_model_3(input_shape):\n",
+          "    model = Sequential()\n",
+          "\n",
+          "    # Input layer\n",
+          "    model.add(Dense(128, activation='relu', input_shape=(input_shape,), kernel_regularizer=l2(0.01)))\n",
+          "\n",
+          "\n",
+          "    # Hidden layers\n",
+          "    model.add(Dense(128, activation='relu', kernel_regularizer=l2(0.01)))\n",
+          "\n",
+          "\n",
+          "    model.add(Dense(64, activation='relu', kernel_regularizer=l2(0.01)))\n",
+          "\n",
+          "\n",
+          "    model.add(Dense(32, activation='relu', kernel_regularizer=l2(0.01)))\n",
+          "\n",
+          "\n",
+          "    model.add(Dense(16, activation='relu', kernel_regularizer=l2(0.01)))\n",
+          "\n",
+          "    # Output layer\n",
+          "    model.add(Dense(1))  # No activation for regression\n",
+          "\n",
+          "    # Compile the model\n",
+          "    model.compile(optimizer='adam', loss='mse', metrics=['mae'])\n",
+          "\n",
+          "    return model\n",
+          "\n",
+          "# Build Model 3\n",
+          "model3_finetuned = build_model_3(X_train_scaled.shape[1])\n",
+          "\n",
+          "# Set early stopping to stop training when validation loss stops improving\n",
+          "early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)\n",
+          "\n",
+          "# Train Model 3 with early stopping\n",
+          "history3_finetuned = model3_finetuned.fit(X_train_scaled, y_train, epochs=200, batch_size=32,\n",
+          "                                          validation_data=(X_test_scaled, y_test),\n",
+          "                                          callbacks=[early_stopping], verbose=0)\n",
+          "\n"
+        ],
+        "metadata": {
+          "id": "Tn3-xszu1xUd"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Evaluate the model\n",
+          "loss, mae = model3_finetuned.evaluate(X_test_scaled, y_test)\n",
+          "print(f'Model 3 -Finetuned - Test MAE: {mae}')"
+        ],
+        "metadata": {
+          "id": "G9xpCL7Djbiy"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "####7-2 Dropout only"
+        ],
+        "metadata": {
+          "id": "ESmKVxG11813"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import tensorflow as tf\n",
+          "from tensorflow.keras.models import Sequential\n",
+          "from tensorflow.keras.layers import Dense, Dropout, BatchNormalization\n",
+          "from tensorflow.keras.regularizers import l2\n",
+          "from tensorflow.keras.callbacks import EarlyStopping\n",
+          "\n",
+          "# Define Model 3 with regularization, dropout, and batch normalization\n",
+          "def build_model_3(input_shape):\n",
+          "    model = Sequential()\n",
+          "\n",
+          "    # Input layer\n",
+          "    model.add(Dense(128, activation='relu', input_shape=(input_shape,)))\n",
+          "    model.add(Dropout(0.3))\n",
+          "\n",
+          "    # Hidden layers\n",
+          "    model.add(Dense(128, activation='relu'))\n",
+          "    model.add(Dropout(0.3))\n",
+          "\n",
+          "    model.add(Dense(64, activation='relu'))\n",
+          "    model.add(Dropout(0.3))\n",
+          "\n",
+          "    model.add(Dense(32, activation='relu'))\n",
+          "    model.add(Dropout(0.3))\n",
+          "\n",
+          "    model.add(Dense(16, activation='relu'))\n",
+          "    model.add(Dropout(0.3))\n",
+          "\n",
+          "    # Output layer\n",
+          "    model.add(Dense(1))  # No activation for regression\n",
+          "\n",
+          "    # Compile the model\n",
+          "    model.compile(optimizer='adam', loss='mse', metrics=['mae'])\n",
+          "\n",
+          "    return model\n",
+          "\n",
+          "# Build Model 3\n",
+          "model3_finetuned = build_model_3(X_train_scaled.shape[1])\n",
+          "\n",
+          "# Set early stopping to stop training when validation loss stops improving\n",
+          "early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)\n",
+          "\n",
+          "# Train Model 3 with early stopping\n",
+          "history3_finetuned = model3_finetuned.fit(X_train_scaled, y_train, epochs=200, batch_size=32,\n",
+          "                                          validation_data=(X_test_scaled, y_test),\n",
+          "                                          callbacks=[early_stopping], verbose=0)"
+        ],
+        "metadata": {
+          "id": "k6p8TEQ_2AV8"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Evaluate the model\n",
+          "loss, mae = model3_finetuned.evaluate(X_test_scaled, y_test)\n",
+          "print(f'Model 3 - Test MAE: {mae}')"
+        ],
+        "metadata": {
+          "id": "UJF_xsu5juKP"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "####7-3 Bacthnormalization only"
+        ],
+        "metadata": {
+          "id": "Vk1jpXJA2C2j"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import tensorflow as tf\n",
+          "from tensorflow.keras.models import Sequential\n",
+          "from tensorflow.keras.layers import Dense, Dropout, BatchNormalization\n",
+          "from tensorflow.keras.regularizers import l2\n",
+          "from tensorflow.keras.callbacks import EarlyStopping\n",
+          "\n",
+          "# Define Model 3 with regularization, dropout, and batch normalization\n",
+          "def build_model_3(input_shape):\n",
+          "    model = Sequential()\n",
+          "\n",
+          "    # Input layer\n",
+          "    model.add(Dense(128, activation='relu', input_shape=(input_shape,)))\n",
+          "    model.add(BatchNormalization())\n",
+          "\n",
+          "\n",
+          "    # Hidden layers\n",
+          "    model.add(Dense(128, activation='relu'))\n",
+          "    model.add(BatchNormalization())\n",
+          "\n",
+          "\n",
+          "    model.add(Dense(64, activation='relu'))\n",
+          "    model.add(BatchNormalization())\n",
+          "\n",
+          "\n",
+          "    model.add(Dense(32, activation='relu'))\n",
+          "    model.add(BatchNormalization())\n",
+          "\n",
+          "\n",
+          "    model.add(Dense(16, activation='relu'))\n",
+          "    model.add(BatchNormalization())\n",
+          "\n",
+          "\n",
+          "    # Output layer\n",
+          "    model.add(Dense(1))  # No activation for regression\n",
+          "\n",
+          "    # Compile the model\n",
+          "    model.compile(optimizer='adam', loss='mse', metrics=['mae'])\n",
+          "\n",
+          "    return model\n",
+          "\n",
+          "# Build Model 3\n",
+          "model3_finetuned = build_model_3(X_train_scaled.shape[1])\n",
+          "\n",
+          "# Set early stopping to stop training when validation loss stops improving\n",
+          "early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)\n",
+          "\n",
+          "# Train Model 3 with early stopping\n",
+          "history3_finetuned = model3_finetuned.fit(X_train_scaled, y_train, epochs=200, batch_size=32,\n",
+          "                                          validation_data=(X_test_scaled, y_test),\n",
+          "                                          callbacks=[early_stopping], verbose=0)"
+        ],
+        "metadata": {
+          "id": "lBHkJeeV2GfJ"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Evaluate the model\n",
+          "loss, mae = model3_finetuned.evaluate(X_test_scaled, y_test)\n",
+          "print(f'Model 3 - Test MAE: {mae}')"
+        ],
+        "metadata": {
+          "id": "uRChYFWqkDrk"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import matplotlib.pyplot as plt\n",
+          "\n",
+          "# Plot learning curves\n",
+          "plt.plot(history3_finetuned.history['loss'], label='Train Loss')\n",
+          "plt.plot(history3_finetuned.history['val_loss'], label='Validation Loss')\n",
+          "plt.title('Learning Curve')\n",
+          "plt.xlabel('Epochs')\n",
+          "plt.ylabel('Loss (MSE)')\n",
+          "plt.legend()\n",
+          "plt.show()\n"
+        ],
+        "metadata": {
+          "id": "zX0gKcVs1Yv9"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "Plotting Actual vs. Predicted"
+        ],
+        "metadata": {
+          "id": "86o2RUJr1dQJ"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Predict the stock price using the fine-tuned model\n",
+          "y_pred3_finetuned = model3_finetuned.predict(X_test_scaled)\n",
+          "\n",
+          "# Plot Actual vs Predicted for the fine-tuned model\n",
+          "plt.figure(figsize=(10, 6))\n",
+          "plt.plot(y_test.values, label='Actual AMZN', color='blue')\n",
+          "plt.plot(y_pred3_finetuned, label='Model 3 Fine-Tuned Predicted AMZN', color='red')\n",
+          "plt.title('Model 3 Fine-Tuned: Actual vs Predicted')\n",
+          "plt.legend()\n",
+          "plt.show()\n"
+        ],
+        "metadata": {
+          "id": "7-B0us6a1dpN"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#END\n",
+          "\n",
+          "---\n"
+        ],
+        "metadata": {
+          "id": "a9ZU0Huyh10I"
+        }
+      }
+    ]
+  }

@@ -1,0 +1,297 @@
+{
+    "nbformat": 4,
+    "nbformat_minor": 0,
+    "metadata": {
+      "colab": {
+        "provenance": [],
+        "collapsed_sections": [
+          "HJv9KNWnUN9L",
+          "2gGnFLi4UdpQ",
+          "B4cjQTT3Ugr6",
+          "orTaRHX7UjT8",
+          "RXWduDDAUnqE"
+        ]
+      },
+      "kernelspec": {
+        "name": "python3",
+        "display_name": "Python 3"
+      },
+      "language_info": {
+        "name": "python"
+      }
+    },
+    "cells": [
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#**ANN-RNN-LSTM**"
+        ],
+        "metadata": {
+          "id": "6xWMr7WsUJPb"
+        }
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##1-Install"
+        ],
+        "metadata": {
+          "id": "HJv9KNWnUN9L"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "import yfinance as yf\n",
+          "import pandas as pd\n",
+          "import numpy as np\n",
+          "import matplotlib.pyplot as plt\n",
+          "from sklearn.preprocessing import MinMaxScaler\n",
+          "from sklearn.metrics import mean_squared_error, mean_absolute_error\n",
+          "from tensorflow.keras.models import Sequential\n",
+          "from tensorflow.keras.layers import Dense, LSTM, SimpleRNN\n",
+          "from tensorflow.keras.optimizers import Adam"
+        ],
+        "metadata": {
+          "id": "4TCPlgUUAVXO"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##2-Data"
+        ],
+        "metadata": {
+          "id": "2gGnFLi4UdpQ"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# 1. Download Amazon and S&P 500 data\n",
+          "start_date = '2018-01-01'\n",
+          "end_date = '2024-09-15'\n",
+          "\n",
+          "amzn_data = yf.download('AMZN', start=start_date, end=end_date)\n",
+          "sp500_data = yf.download('^GSPC', start=start_date, end=end_date)\n",
+          "\n",
+          "# 2. Keep only the 'Adj Close' prices\n",
+          "amzn_data = amzn_data[['Adj Close']].rename(columns={'Adj Close': 'AMZN'})\n",
+          "sp500_data = sp500_data[['Adj Close']].rename(columns={'Adj Close': 'SP500'})\n",
+          "\n",
+          "# 3. Merge the datasets on date\n",
+          "data = pd.concat([amzn_data, sp500_data], axis=1)\n",
+          "\n",
+          "# 4. Dropping missing values\n",
+          "data.dropna(inplace=True)\n",
+          "\n",
+          "# 5. Create lag features for Amazon and S&P 500\n",
+          "data['AMZN_lag1'] = data['AMZN'].shift(1)\n",
+          "data['AMZN_lag2'] = data['AMZN'].shift(2)\n",
+          "data['AMZN_lag3'] = data['AMZN'].shift(3)\n",
+          "data['SP500_lag1'] = data['SP500'].shift(1)\n",
+          "\n",
+          "# 6. Remove rows with NaN values after creating lags\n",
+          "data.dropna(inplace=True)\n",
+          "\n",
+          "# 7. Separate features (X) and target (y)\n",
+          "X = data[['AMZN_lag1', 'AMZN_lag2', 'AMZN_lag3', 'SP500_lag1']]\n",
+          "y = data['AMZN']\n"
+        ],
+        "metadata": {
+          "id": "U0mmCJT9Aa7b"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##3-Prepare data"
+        ],
+        "metadata": {
+          "id": "B4cjQTT3Ugr6"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# 8. Scaling data (Min-Max normalization)\n",
+          "scaler = MinMaxScaler()\n",
+          "X_scaled = scaler.fit_transform(X)\n",
+          "\n",
+          "# Reshaping data for RNN/LSTM models: [samples, time steps, features]\n",
+          "X_scaled_rnn_lstm = X_scaled.reshape((X_scaled.shape[0], 1, X_scaled.shape[1]))\n",
+          "\n",
+          "# Train-test split (80% train, 20% test)\n",
+          "train_size = int(len(X_scaled) * 0.8)\n",
+          "X_train, X_test = X_scaled[:train_size], X_scaled[train_size:]\n",
+          "y_train, y_test = y[:train_size], y[train_size:]\n",
+          "\n",
+          "X_train_rnn_lstm, X_test_rnn_lstm = X_scaled_rnn_lstm[:train_size], X_scaled_rnn_lstm[train_size:]\n"
+        ],
+        "metadata": {
+          "id": "XnWXJLzKAfrw"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##4-Model Fitting"
+        ],
+        "metadata": {
+          "id": "orTaRHX7UjT8"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Function to compile, train, and evaluate a model\n",
+          "def train_and_evaluate(model, X_train, y_train, X_test, y_test, epochs=50, batch_size=32):\n",
+          "    model.compile(optimizer=Adam(), loss='mse', metrics=['mae'])\n",
+          "    history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_test, y_test), verbose=0)\n",
+          "    y_pred = model.predict(X_test)\n",
+          "    mse = mean_squared_error(y_test, y_pred)\n",
+          "    mae = mean_absolute_error(y_test, y_pred)\n",
+          "    return mse, mae, y_pred, history"
+        ],
+        "metadata": {
+          "id": "LyVtjVHQAli6"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "**Model 01**"
+        ],
+        "metadata": {
+          "id": "OSXqH2cVAudo"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# 1. ANN Model\n",
+          "ann_model = Sequential()\n",
+          "ann_model.add(Dense(50, activation='relu', input_dim=X_train.shape[1]))\n",
+          "ann_model.add(Dense(50, activation='relu'))\n",
+          "ann_model.add(Dense(1))\n",
+          "ann_mse, ann_mae, ann_pred, _ = train_and_evaluate(ann_model, X_train, y_train, X_test, y_test)"
+        ],
+        "metadata": {
+          "id": "85Q63OWmAq7r"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "**Model 02**"
+        ],
+        "metadata": {
+          "id": "VpvLR3k4AvlE"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# 2. RNN Model\n",
+          "rnn_model = Sequential()\n",
+          "rnn_model.add(SimpleRNN(50, activation='relu', return_sequences=False, input_shape=(1, X_train_rnn_lstm.shape[2])))\n",
+          "rnn_model.add(Dense(1))\n",
+          "rnn_mse, rnn_mae, rnn_pred, _ = train_and_evaluate(rnn_model, X_train_rnn_lstm, y_train, X_test_rnn_lstm, y_test)\n"
+        ],
+        "metadata": {
+          "id": "QFDvlGsyAv_d"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "**Model 03**"
+        ],
+        "metadata": {
+          "id": "SnL0eNx1A1xr"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# 3. LSTM Model\n",
+          "lstm_model = Sequential()\n",
+          "lstm_model.add(LSTM(50, activation='relu', return_sequences=False, input_shape=(1, X_train_rnn_lstm.shape[2])))\n",
+          "lstm_model.add(Dense(1))\n",
+          "lstm_mse, lstm_mae, lstm_pred, _ = train_and_evaluate(lstm_model, X_train_rnn_lstm, y_train, X_test_rnn_lstm, y_test)\n"
+        ],
+        "metadata": {
+          "id": "706NjLkbA2HD"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "##5-Comparison"
+        ],
+        "metadata": {
+          "id": "RXWduDDAUnqE"
+        }
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Print performance comparison\n",
+          "print(f\"ANN Model - MSE: {ann_mse:.5f}, MAE: {ann_mae:.5f}\")\n",
+          "print(f\"RNN Model - MSE: {rnn_mse:.5f}, MAE: {rnn_mae:.5f}\")\n",
+          "print(f\"LSTM Model - MSE: {lstm_mse:.5f}, MAE: {lstm_mae:.5f}\")"
+        ],
+        "metadata": {
+          "id": "h82BDJ9GA8O5"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "code",
+        "source": [
+          "# Plot predictions vs actual values\n",
+          "plt.figure(figsize=(12, 6))\n",
+          "plt.plot(y_test.values, label='Actual Prices', color='blue')\n",
+          "plt.plot(ann_pred, label='ANN Predictions', color='green')\n",
+          "plt.plot(rnn_pred, label='RNN Predictions', color='orange')\n",
+          "plt.plot(lstm_pred, label='LSTM Predictions', color='red')\n",
+          "plt.title('AMZN Stock Price Predictions - Actual vs Predicted')\n",
+          "plt.xlabel('Days')\n",
+          "plt.ylabel('Price')\n",
+          "plt.legend()\n",
+          "plt.show()"
+        ],
+        "metadata": {
+          "id": "25fe2EuBA9Uj"
+        },
+        "execution_count": null,
+        "outputs": []
+      },
+      {
+        "cell_type": "markdown",
+        "source": [
+          "#END\n",
+          "\n",
+          "---\n"
+        ],
+        "metadata": {
+          "id": "VjKaHG_UsaoP"
+        }
+      }
+    ]
+  }
